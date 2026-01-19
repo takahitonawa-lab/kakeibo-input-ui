@@ -14,7 +14,10 @@
       --btn:#111827; --btnText:#fff;
       --radius:18px;
 
-      /* ✅ ここで“ガツンと大きく” */
+      /* ✅ 全体を9割に */
+      --uiScale: .9;
+
+      /* ✅ 基本サイズ（uiScaleで全体が縮む） */
       --title: 34px;
       --sub: 16px;
       --label: 16px;
@@ -22,12 +25,37 @@
       --padY: 16px;
       --padX: 14px;
       --gap: 14px;
+
+      /* かわいさ調整 */
+      --shadowSoft: 0 14px 30px rgba(17, 24, 39, .10);
+      --shadowPop: 0 18px 45px rgba(17, 24, 39, .18);
+      --ring: 0 0 0 4px rgba(236, 72, 153, .12); /* pink ring */
+      --pink: #ec4899;
+      --sky: #38bdf8;
+      --lav: #a78bfa;
+      --mint: #34d399;
     }
 
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial;}
+    html,body{
+      margin:0;padding:0;
+      color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial;
+      background:
+        radial-gradient(1200px 600px at 15% 8%, rgba(236,72,153,.18), transparent 60%),
+        radial-gradient(900px 500px at 90% 15%, rgba(56,189,248,.20), transparent 55%),
+        radial-gradient(900px 500px at 80% 90%, rgba(167,139,250,.16), transparent 55%),
+        var(--bg);
+    }
+
     *{ touch-action: manipulation; }
     body{ min-height:100svh; overflow-x:hidden; }
+
+    /* ✅ 全体を9割に（iPhoneでも安全に効く） */
+    .ui{
+      transform: scale(var(--uiScale));
+      transform-origin: top center;
+      width: calc(100% / var(--uiScale));
+    }
 
     .page{
       max-width: 760px;
@@ -39,63 +67,130 @@
       flex-direction:column;
     }
 
-    .title{font-size:var(--title);font-weight:900;margin:4px 0 2px;}
-    .subtitle{font-size:var(--sub);color:var(--muted);margin:0 0 12px;}
+    .title{
+      font-size:var(--title);
+      font-weight:900;
+      margin:6px 0 4px;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .title::before{
+      content:"🍮";
+      display:inline-flex;
+      width:42px;height:42px;
+      align-items:center;justify-content:center;
+      border-radius:14px;
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(229,231,235,.8);
+      box-shadow: var(--shadowSoft);
+      backdrop-filter: blur(8px);
+    }
+
+    .subtitle{
+      font-size:var(--sub);
+      color:var(--muted);
+      margin:0 0 14px;
+    }
+
+    /* かわいさ：フォームを“ふわっとカード”に */
+    .card{
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(229,231,235,.85);
+      border-radius: 26px;
+      padding: 14px 14px 16px;
+      box-shadow: var(--shadowSoft);
+      backdrop-filter: blur(10px);
+    }
 
     form{display:flex;flex-direction:column;gap:var(--gap);}
 
-    label{display:block;font-size:var(--label);color:var(--muted);margin:0 0 8px;}
+    label{
+      display:block;
+      font-size:var(--label);
+      color:var(--muted);
+      margin:0 0 8px;
+      letter-spacing:.1px;
+    }
 
     input,select,textarea{
       width:100%;box-sizing:border-box;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:22px;
       padding:var(--padY) var(--padX);
-      background:#fff;color:var(--ink);
+      background: rgba(255,255,255,.92);
+      color:var(--ink);
       font-size:var(--ctrl);
       line-height:1.25;
       outline:none;
       -webkit-appearance:none;appearance:none;
+      box-shadow: 0 10px 20px rgba(17,24,39,.06);
+      transition: box-shadow .15s ease, transform .08s ease, border-color .15s ease;
+    }
+    input:focus,select:focus,textarea:focus{
+      border-color: rgba(236,72,153,.35);
+      box-shadow: var(--ring), 0 16px 30px rgba(17,24,39,.08);
     }
 
     .amount{font-weight:900;letter-spacing:.2px;}
     textarea{min-height:92px;resize:vertical;}
 
+    /* かわいさ：ボタンをグラデ＋押した感 */
     .btn{
       width:100%;
-      border:none;border-radius:22px;
+      border:none;border-radius:24px;
       padding:18px 14px;
-      background:var(--btn);color:var(--btnText);
+      background: linear-gradient(135deg, #111827, #374151);
+      color:var(--btnText);
       font-weight:900;font-size:22px;
-      box-shadow:0 14px 20px rgba(0,0,0,.16);
+      box-shadow: var(--shadowPop);
       cursor:pointer;
       margin-top: 6px;
+      transition: transform .06s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    .btn:active{
+      transform: translateY(1px) scale(.99);
+      filter: brightness(1.03);
+      box-shadow: 0 14px 30px rgba(17,24,39,.18);
     }
 
-    .hint{font-size:14px;color:var(--muted);line-height:1.4;margin-top:10px;}
+    .hint{
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.4;
+      margin-top:10px;
+      padding-left: 2px;
+    }
+
     .toastWrap{position:fixed;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;}
     .toast{
       pointer-events:none;
-      background:rgba(255,255,255,.96);
-      border:1px solid #e5e7eb;
-      border-radius:24px;
-      box-shadow:0 18px 40px rgba(0,0,0,.25);
-      padding:16px 16px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(229,231,235,.9);
+      border-radius: 28px;
+      box-shadow: 0 22px 60px rgba(17,24,39,.28);
+      padding: 16px 16px;
       display:grid;
-      grid-template-columns:100px 1fr;
+      grid-template-columns:108px 1fr;
       gap:12px;
       align-items:center;
       opacity:0;
-      transform: translateY(10px);
+      transform: translateY(14px) scale(.98);
       transition: .18s ease;
-      width:min(380px, 92vw);
+      width:min(420px, 92vw);
+      backdrop-filter: blur(12px);
     }
-    .toast.show{opacity:1;transform: translateY(0);}
-    .toast img{width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.15));}
-    .toast .t1{font-weight:900;font-size:20px;margin:0;}
-    .toast .t2{color:#6b7280;font-size:13px;margin:4px 0 0;line-height:1.35;}
+    .toast.show{opacity:1;transform: translateY(0) scale(1);}
+    .toast img{
+      width:108px;height:108px;
+      object-fit:contain;
+      filter: drop-shadow(0 10px 14px rgba(17,24,39,.22));
+    }
+    .toast .t1{font-weight:900;font-size:22px;margin:0;}
+    .toast .t2{color:#6b7280;font-size:14px;margin:4px 0 0;line-height:1.35;}
 
-    /* 背景pom */
+    /* 背景pom（右下） */
     body.hasPom::before{
       content:"";
       position:fixed; inset:0; pointer-events:none;
@@ -109,48 +204,52 @@
 </head>
 
 <body>
-  <div class="page">
-    <div class="title">家計入力</div>
-    <div class="subtitle">金額 / カテゴリ / 支払方法 / メモ / 日付（任意）</div>
+  <div class="ui">
+    <div class="page">
+      <div class="title">家計入力</div>
+      <div class="subtitle">金額 / カテゴリ / 支払方法 / メモ / 日付（任意）</div>
 
-    <form id="f">
-      <div>
-        <label for="amount">金額（必須）</label>
-        <!-- ✅ number回避 -->
-        <input id="amount" class="amount" name="amount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="例：1200" required />
+      <div class="card">
+        <form id="f">
+          <div>
+            <label for="amount">金額（必須）</label>
+            <!-- ✅ number回避 -->
+            <input id="amount" class="amount" name="amount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="例：1200" required />
+          </div>
+
+          <div>
+            <label for="category">カテゴリ（必須）</label>
+            <select id="category" name="category" required>
+              <option value="">読み込み中…</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="method">支払方法（必須）</label>
+            <select id="method" name="method" required>
+              <option value="">読み込み中…</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="memo">メモ（任意）</label>
+            <textarea id="memo" name="memo" placeholder="例：コンビニ / ランチ / etc"></textarea>
+          </div>
+
+          <div>
+            <label for="date">日付（任意）</label>
+            <input id="date" name="date" type="date" />
+          </div>
+
+          <button class="btn" type="submit">追記する</button>
+
+          <div class="hint">
+            ・日付を空にすると「今日」で登録<br/>
+            ・カテゴリは「変動費・特別費のみ」表示（固定費は除外）
+          </div>
+        </form>
       </div>
-
-      <div>
-        <label for="category">カテゴリ（必須）</label>
-        <select id="category" name="category" required>
-          <option value="">読み込み中…</option>
-        </select>
-      </div>
-
-      <div>
-        <label for="method">支払方法（必須）</label>
-        <select id="method" name="method" required>
-          <option value="">読み込み中…</option>
-        </select>
-      </div>
-
-      <div>
-        <label for="memo">メモ（任意）</label>
-        <textarea id="memo" name="memo" placeholder="例：コンビニ / ランチ / etc"></textarea>
-      </div>
-
-      <div>
-        <label for="date">日付（任意）</label>
-        <input id="date" name="date" type="date" />
-      </div>
-
-      <button class="btn" type="submit">追記する</button>
-
-      <div class="hint">
-        ・日付を空にすると「今日」で登録<br/>
-        ・カテゴリは「変動費・特別費のみ」表示（固定費は除外）
-      </div>
-    </form>
+    </div>
   </div>
 
   <div class="toastWrap">
@@ -164,7 +263,6 @@
   </div>
 
   <script>
-    // ★ここだけ置換：あなたのGAS WebApp URL
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
 
     function jsonp(url) {
@@ -197,7 +295,6 @@
     }
 
     function pickFirstReachable(urls, imgEl){
-      // 画像URL候補を順番に試す（軽いHEAD代替：imgのerrorで次へ）
       let i = 0;
       imgEl.onerror = () => {
         i++;
@@ -211,13 +308,11 @@
       setSelectOptions(document.getElementById("category"), data.categories, "カテゴリを選択");
       setSelectOptions(document.getElementById("method"), data.methods, "支払方法を選択");
 
-      // pom背景
       if (data.pomUrls && data.pomUrls.length){
         document.body.classList.add("hasPom");
         document.body.style.setProperty("--pomBg", `url("${data.pomUrls[0]}")`);
       }
 
-      // success用kuromi候補
       window.__kuromiUrls = data.kuromiUrls || [];
       if (window.__kuromiUrls.length){
         pickFirstReachable(window.__kuromiUrls, document.getElementById("kuromiImg"));
@@ -227,14 +322,13 @@
     const toast = document.getElementById("toast");
     function showToast(){
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 1000);
+      setTimeout(() => toast.classList.remove("show"), 3000); // ✅ 3秒表示
     }
 
     document.getElementById("f").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const fd = new FormData(ev.target);
 
-      // amountを数値化（GAS側はNumberで受ける）
       const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
       fd.set("amount", a);
 
