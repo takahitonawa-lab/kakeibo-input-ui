@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
-  <title>家計入力</title>
+  <title>名和家の家計簿！</title>
 
 <!-- iOS ホーム画面用（最重要） -->
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
@@ -98,23 +98,10 @@
     .title{
       font-size:var(--title);
       font-weight:900;
-      margin: calc(4px * var(--k)) 0 0;
+　　　 margin: calc(6px * var(--k)) 0 calc(8px * var(--k));
       letter-spacing:.2px;
       display:flex;
       align-items:center;
-      gap: calc(10px * var(--k));
-    }
-    .title::before{
-      content:"🍮";
-      display:inline-flex;
-      width: calc(40px * var(--k));
-      height: calc(40px * var(--k));
-      align-items:center;justify-content:center;
-      border-radius: calc(14px * var(--k));
-      background: rgba(255,255,255,.75);
-      border: 1px solid rgba(229,231,235,.8);
-      box-shadow: var(--shadowSoft);
-      backdrop-filter: blur(8px);
     }
 
     .subtitle{
@@ -238,8 +225,7 @@
 <body>
   <div class="page">
     <div>
-      <div class="title">家計入力</div>
-      <div class="subtitle">金額 / カテゴリ / 支払方法 / メモ / 日付（任意）</div>
+      <div class="title">名和家の家計簿！</div>
     </div>
 
     <div class="card">
