@@ -39,20 +39,23 @@
         transparent;
     }
 
-    /* ポム画像 */
+    /* 【修正】ポム画像を背景（背面）に固定して透過させる */
     body.hasPom::after{
-      content:""; position:fixed; inset:0; pointer-events:none; opacity:.25;
-      background-repeat:no-repeat; background-position:right 10px top 10px;
-      background-size: min(250px, 34vw);
+      content:""; position:fixed; inset:0; pointer-events:none; 
+      opacity:0.15; /* 透過度を下げて邪魔しないように */
+      background-repeat:no-repeat; 
+      background-position: center 25%; /* 少し上に配置 */
+      background-size: min(350px, 80vw);
       background-image: var(--pomBg);
-      z-index:3;
+      z-index:-1; /* カードよりも後ろへ */
+      filter: grayscale(10%);
     }
 
     .page{
       max-width: 760px; margin:0 auto; height: 100svh;
       padding: 12px; display:flex; flex-direction:column; gap: 12px;
       position:relative; z-index:1; overflow-y: auto;
-      padding-bottom: 80px; /* 下部の余白 */
+      padding-bottom: 80px;
     }
 
     .header-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; }
@@ -68,17 +71,18 @@
 
     /* 予算メーター */
     .budget-card {
-        background: #fff; border-radius: 16px; padding: 12px 16px;
+        background: rgba(255,255,255,0.8); border-radius: 16px; padding: 12px 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 4px;
         animation: fadeIn 0.5s ease;
+        backdrop-filter: blur(5px);
     }
     @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
 
     .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 6px; }
     .budget-bar-bg { height: 10px; background: var(--barBg); border-radius: 5px; overflow: hidden; }
     .budget-bar-fill { height: 100%; background: var(--barFill); width: 0%; transition: width 1s ease; }
-    .budget-bar-fill.warning { background: #fbbf24; } /* 80%超えで黄色 */
-    .budget-bar-fill.danger { background: #ef4444; }  /* 100%超えで赤 */
+    .budget-bar-fill.warning { background: #fbbf24; }
+    .budget-bar-fill.danger { background: #ef4444; }
 
     .card{
       background: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,0.9);
@@ -123,13 +127,14 @@
     
     .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
     .history-item {
-        background: rgba(255,255,255,0.6); border-radius: 12px; padding: 10px 14px;
+        background: rgba(255,255,255,0.7); border-radius: 12px; padding: 10px 14px;
         display: flex; justify-content: space-between; align-items: center; font-size: 14px;
         border: 1px solid rgba(0,0,0,0.03); transition: opacity 0.3s;
+        backdrop-filter: blur(5px);
     }
     .h-left { display: flex; flex-direction: column; gap: 2px; }
-    .h-cat { font-weight: bold; font-size: 15px; }
-    .h-meta { font-size: 11px; color: var(--muted); }
+    .h-cat { font-size: 11px; color: var(--muted); }
+    .h-memo { font-weight: bold; font-size: 15px; } /* メモ（店名）を強調 */
     .h-right { display: flex; align-items: center; gap: 10px; }
     .h-amount { font-weight: bold; font-size: 16px; color: var(--ink); }
     .del-btn {
@@ -147,7 +152,6 @@
     }
     .toast.show{ opacity:1; transform: translateY(0); }
     .toast img{ width: 80px; height: 80px; object-fit:contain; }
-    .toast .t1{ font-weight:900; font-size: 20px; margin:0; }
   </style>
 </head>
 
@@ -194,8 +198,8 @@
         </div>
 
         <div>
-          <label>メモ（任意）</label>
-          <textarea name="memo" placeholder="何に使った？"></textarea>
+          <label>メモ（店名など任意）</label>
+          <textarea name="memo" placeholder="例：コープ / 鬼がらし"></textarea>
         </div>
 
         <div>
@@ -234,31 +238,16 @@
   </div>
 
   <script>
-    // ==========================================
-    // 設定エリア
-    // ==========================================
-    // Masterから頂いたデプロイIDのURL
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
-    
-    // 【重要】前回指定していたローカル画像のパス
     const POM_OVERRIDE_URL = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png";
-    
-    // バージョンを変えてキャッシュをリフレッシュさせる
-    const CACHE_KEY = "nawa_kakeibo_v2_history"; 
+    const CACHE_KEY = "nawa_kakeibo_v3_fixed"; 
 
-    // ==========================================
-    // データ読み込みロジック (キャッシュ + 非同期更新)
-    // ==========================================
     async function loadData(force = false) {
         const cached = localStorage.getItem(CACHE_KEY);
-        
-        // キャッシュがあればまず表示してUIをブロックしない
         if (!force && cached) {
             renderUI(JSON.parse(cached));
-            // 裏で最新を取りに行く（履歴などの更新のため）
             fetchLatestData(); 
         } else {
-            // キャッシュがない場合、または強制更新時は待つ
             await fetchLatestData();
         }
     }
@@ -272,12 +261,10 @@
     }
 
     function renderUI(data) {
-        // 1. プルダウン生成
+        // 1. プルダウン生成 (Masterから取得)
         const setOpts = (id, items) => {
             const el = document.getElementById(id);
-            // ユーザーが選択中の場合は上書きして邪魔しない
             if(el.options.length > 1 && el.value) return; 
-            
             el.innerHTML = '<option value="">選択してください</option>';
             if(items) {
                 items.forEach(v => {
@@ -290,7 +277,7 @@
         setOpts("category", data.categories);
         setOpts("method", data.methods);
 
-        // 2. 画像設定
+        // 2. 画像設定 (背面に設定)
         const pomUrl = (POM_OVERRIDE_URL && POM_OVERRIDE_URL.trim()) ? POM_OVERRIDE_URL : (data.pomUrls && data.pomUrls[0]);
         if (pomUrl) {
             document.body.classList.add("hasPom");
@@ -300,34 +287,33 @@
             document.getElementById("kuromiImg").src = data.kuromiUrls[0];
         }
 
-        // 3. 予算メーター更新
+        // 3. 予算メーター
         if (data.budget) {
             document.getElementById("budgetCard").style.display = "block";
-            document.getElementById("currentTotal").textContent = data.budget.total.toLocaleString();
-            document.getElementById("budgetLimit").textContent = data.budget.limit.toLocaleString();
+            document.getElementById("currentTotal").textContent = Number(data.budget.total).toLocaleString();
+            document.getElementById("budgetLimit").textContent = Number(data.budget.limit).toLocaleString();
             document.getElementById("percentLabel").textContent = data.budget.percent + "%";
             
             const bar = document.getElementById("budgetBar");
             bar.style.width = data.budget.percent + "%";
             bar.className = "budget-bar-fill";
-            if(data.budget.percent > 80) bar.classList.add("warning"); // 黄色
-            if(data.budget.percent > 100) bar.classList.add("danger"); // 赤
+            if(data.budget.percent > 80) bar.classList.add("warning");
+            if(data.budget.percent > 100) bar.classList.add("danger");
         }
 
-        // 4. 履歴リスト更新
+        // 4. 履歴リスト (Spend_Logの列順に合わせて修正)
         const list = document.getElementById("historyList");
         list.innerHTML = "";
         if(!data.history || data.history.length === 0) {
-            list.innerHTML = '<li style="text-align:center; color:#999; font-size:12px; padding:10px;">まだ履歴がありません</li>';
+            list.innerHTML = '<li style="text-align:center; color:#999; font-size:12px; padding:10px;">履歴がありません</li>';
         } else {
             data.history.forEach(h => {
                 const li = document.createElement("li");
                 li.className = "history-item";
-                // 削除ボタン付きのHTMLを生成
                 li.innerHTML = `
                     <div class="h-left">
-                        <span class="h-cat">${h.category}</span>
-                        <span class="h-meta">${h.date} · ${h.memo || '-'}</span>
+                        <span class="h-memo">${h.memo || '-'}</span>
+                        <span class="h-cat">${h.date} · ${h.category}</span>
                     </div>
                     <div class="h-right">
                         <span class="h-amount">¥${Number(h.amount).toLocaleString()}</span>
@@ -339,78 +325,56 @@
         }
     }
 
-    // ==========================================
-    // 削除処理
-    // ==========================================
     window.deleteEntry = async (id, btnEl) => {
         if(!confirm("この記録を削除しますか？")) return;
-        
-        // 楽観的UI: まず画面から消してしまう
         const li = btnEl.closest("li");
-        li.style.opacity = "0.3"; // 薄くする
-        
+        li.style.opacity = "0.3";
         try {
             const fd = new FormData();
             fd.set("action", "delete");
             fd.set("rowId", id);
-            
-            // POST送信（JSONPではなくfetchを使用）
             await fetch(GAS_URL, { method: "POST", body: fd });
-            
-            // 成功したら完全に消し、データ再取得して整合性をとる
             li.remove();
             fetchLatestData(); 
         } catch(e) {
-            alert("削除に失敗しました: " + e.message);
-            li.style.opacity = "1"; // 戻す
+            alert("削除に失敗しました");
+            li.style.opacity = "1";
         }
     };
 
-    // ==========================================
-    // 送信処理 (爆速モード)
-    // ==========================================
     document.getElementById("f").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const btn = document.getElementById("submitBtn");
         const fd = new FormData(ev.target);
 
-        // 楽観的UI: 成功したことにして画面をリセット
         showToast();
         ev.target.reset();
-        document.activeElement.blur(); // キーボード閉じる
+        document.activeElement.blur();
         btn.disabled = true;
         setTimeout(() => btn.disabled = false, 500);
 
-        // データ整形
         let dateVal = fd.get("date");
         if (!dateVal) {
             const now = new Date();
             const y = now.getFullYear();
             const m = ("0" + (now.getMonth()+1)).slice(-2);
             const d = ("0" + now.getDate()).slice(-2);
-            dateVal = `${y}-${m}-${d}`;
+            dateVal = `${y}/${m}/${d}`;
         }
         fd.set("date", dateVal);
         const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
         fd.set("amount", a);
 
-        // keepalive: true で裏送信
         fetch(GAS_URL, { method: "POST", body: fd, keepalive: true })
           .then(() => {
-              // 送信完了後、少し待ってから履歴を更新（スプシ反映待ち）
               setTimeout(fetchLatestData, 2000);
           });
     });
 
-    // 初期化
     window.addEventListener("DOMContentLoaded", () => {
         loadData();
-        // 更新ボタン
         document.getElementById("refreshBtn").onclick = () => {
-            const icon = document.querySelector(".refresh-btn svg");
-            if(icon) icon.style.transform = "rotate(360deg)";
             loadData(true);
-            setTimeout(() => { if(icon) icon.style.transform = ""; }, 500);
         };
     });
 
@@ -420,7 +384,6 @@
         setTimeout(() => t.classList.remove("show"), 2500);
     }
 
-    // JSONP関数（GET用）
     function jsonp(url) {
         return new Promise((resolve, reject) => {
             const cb = "cb_" + Math.random().toString(36).slice(2);
