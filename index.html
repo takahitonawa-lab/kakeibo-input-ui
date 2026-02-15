@@ -13,7 +13,7 @@
       --accent-pink: #ff7eb3;
       --card-bg: rgba(255, 255, 255, 0.85);
       --border-thick: 2.5px;
-      --stamp-size: 86px; /* ボタンサイズをわずかに微増 */
+      --stamp-size: 86px;
     }
 
     html,body{
@@ -30,7 +30,6 @@
       overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; 
     }
     
-    /* ヘッダー：配置の最適化 */
     .header { position: relative; margin-bottom: 8px; min-height: 105px; padding: 10px 5px 0; }
     .title-group { position: relative; z-index: 2; padding-right: 100px; } 
     .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #555; }
@@ -61,7 +60,7 @@
       border: var(--border-thick) solid #fff;
       backdrop-filter: blur(5px);
     }
-    label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: bold; padding-left: 4px; }
+    label { font-size: 10.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: bold; padding-left: 4px; white-space: nowrap; }
     
     .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 12px; }
     .currency { position: absolute; left: 15px; font-weight: 900; font-size: 24px; color: var(--accent-pink); }
@@ -77,14 +76,13 @@
       margin-bottom: 12px; background: #fff;
     }
 
-    /* レイアウト調整：日付を少し長めに調整 */
-    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 5px; }
-    .date-box { flex: 1; min-width: 0; } 
+    /* レイアウト調整：日付を短く、ボタンを主役に */
+    .row-flex { display: flex; gap: 15px; align-items: flex-end; margin-top: 5px; }
+    .date-box { flex: 0.45; min-width: 0; } /* 幅を抑制 */
     .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
 
-    .btn-group { display: flex; flex-direction: column; align-items: center; }
+    .btn-group { flex: 0.55; display: flex; flex-direction: column; align-items: center; }
     
-    /* スタンプボタン：画像が縮小しないよう相対配置 */
     .stamp-btn {
       width: var(--stamp-size); height: var(--stamp-size); border-radius: 22px;
       border: 3px solid #fff; 
@@ -95,29 +93,30 @@
       transition: all 0.1s; padding: 0; overflow: hidden;
     }
 
-    /* ボタン内のテキスト：画像の上に重ねる（透過） */
+    /* ボタン内のテキスト：最上部に移動して透過 */
     .btn-inner-label { 
       position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
+      top: 8px; /* 上端から8pxの位置に固定 */
+      left: 50%;
+      transform: translateX(-50%);
       width: 100%; text-align: center;
-      font-size: 11px; 
+      font-size: 10px; 
       font-weight: 900; 
       color: #fff; 
-      opacity: 0.7; /* 透過 */
+      opacity: 0.65; /* 透過 */
       letter-spacing: 0.5px;
-      z-index: 2; /* 最前面 */
-      pointer-events: none; /* テキストがクリックの邪魔をしないように */
+      z-index: 2;
+      pointer-events: none;
       text-shadow: 0 0 4px rgba(0,0,0,0.2);
     }
 
-    /* 画像：ボタンいっぱいに表示 */
     .stamp-btn img { 
       width: 90%; 
       height: 90%; 
       object-fit: contain;
       position: relative;
-      z-index: 1; /* テキストの背面 */
+      z-index: 1;
+      margin-top: 4px; /* 少し下げてテキストとの重なりを調整 */
     }
     
     .stamp-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px rgba(255, 126, 179, 0.2); }
