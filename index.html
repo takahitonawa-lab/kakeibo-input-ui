@@ -6,15 +6,14 @@
   <title>名和家の家計簿！</title>
   <style>
     :root{
-      /* 目に優しい淡いパステルグラデーション */
       --ink: #444;
       --muted: #888;
-      --bg-pink: #fff0f5;   /* 非常に淡いピンク */
-      --bg-purple: #f3f0ff; /* 非常に淡いパープル */
+      --bg-pink: #fff0f5;
+      --bg-purple: #f3f0ff;
       --accent-pink: #ff7eb3;
       --card-bg: rgba(255, 255, 255, 0.85);
       --border-thick: 2.5px;
-      --stamp-size: 84px; /* ボタンサイズを10%アップ */
+      --stamp-size: 84px;
     }
 
     html,body{
@@ -26,27 +25,27 @@
     }
     *{ box-sizing: border-box; touch-action: manipulation; }
 
-    /* 画面全体のはみ出し防止 */
+    /* 画面全体のはみ出しを徹底ガード */
     .page { 
-      max-width: 500px; margin: 0 auto; padding: 12px; height: 100svh; 
+      max-width: 500px; margin: 0 auto; padding: 10px; height: 100svh; 
       overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; 
     }
     
-    /* ヘッダー：右上デカ画像（10%縮小 & 位置微調整） */
-    .header { position: relative; margin-bottom: 8px; min-height: 100px; padding-top: 10px; }
-    .title-group { position: relative; z-index: 2; padding-right: 80px; } /* 画像との重なりを考慮 */
+    /* ヘッダー：画像を小さくし、左へ寄せる */
+    .header { position: relative; margin-bottom: 8px; min-height: 100px; padding: 10px 5px 0; }
+    .title-group { position: relative; z-index: 2; padding-right: 95px; } /* 画像との干渉防止 */
     .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #555; }
-    .title-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; } /* 1px小さく */
+    .title-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
     
     .top-icon {
-      position: absolute; right: -10px; top: -10px; /* 少し内側へ */
-      width: 125px; height: 125px; object-fit: contain; /* 10%縮小 */
+      position: absolute; 
+      right: 5px; top: 0px; /* 左側（内側）へ動かし、上端も調整 */
+      width: 110px; height: 110px; object-fit: contain; /* さらに小さく */
       opacity: 0.3;
       z-index: 0;
       pointer-events: none;
     }
 
-    /* 予算カード */
     .budget-card {
       position: relative; z-index: 2;
       background: #fff; border-radius: 20px; padding: 16px;
@@ -57,7 +56,6 @@
     .budget-bar-bg { height: 12px; background: #f5f5f5; border-radius: 6px; overflow: hidden; margin-top: 8px; }
     .budget-bar-fill { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); width: 0%; transition: width 1s ease; }
 
-    /* メインフォーム */
     .card {
       background: var(--card-bg); border-radius: 24px; padding: 18px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.04);
@@ -80,27 +78,44 @@
       margin-bottom: 12px; background: #fff;
     }
 
-    /* レイアウト調整：日付を少し長く、ボタンを大きく */
-    .row-flex { display: flex; gap: 15px; align-items: flex-end; margin-top: 5px; }
-    .date-box { flex: 0.45; min-width: 0; } /* 0.4から0.45へ微増 */
+    /* レイアウト調整：日付を少し長く */
+    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 5px; }
+    .date-box { flex: 0.52; min-width: 0; } /* 日付を少し長く調整 */
     .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
 
-    .btn-group { flex: 0.55; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .btn-group { flex: 0.48; display: flex; flex-direction: column; align-items: center; }
     .stamp-btn {
       width: var(--stamp-size); height: var(--stamp-size); border-radius: 22px;
       border: 3px solid #fff; 
       background: linear-gradient(135deg, #ffbdc0, #fecfef);
       box-shadow: 0 5px 0px rgba(255, 126, 179, 0.2);
       cursor: pointer; position: relative;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.1s; padding: 0; overflow: hidden;
+      display: flex; 
+      flex-direction: column; /* 上下に配置 */
+      align-items: center; 
+      justify-content: flex-start; /* 上寄せ */
+      padding: 4px 0;
+      transition: all 0.1s; overflow: hidden;
     }
-    .stamp-btn img { width: 88%; height: 88%; object-fit: contain; }
-    .btn-label { font-size: 11px; font-weight: 900; color: var(--accent-pink); letter-spacing: 0.5px; }
+
+    /* ボタン内のテキスト：最上部で透過 */
+    .btn-inner-label { 
+      font-size: 10px; 
+      font-weight: 900; 
+      color: #fff; 
+      opacity: 0.6; /* 透過 */
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .stamp-btn img { 
+      width: 65%; /* 画像サイズ調整 */
+      height: 65%; 
+      object-fit: contain; 
+    }
     
     .stamp-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px rgba(255, 126, 179, 0.2); }
 
-    /* 履歴リスト */
     .history-item {
       background: rgba(255, 255, 255, 0.7); border-radius: 18px;
       padding: 10px 15px; display: flex; justify-content: space-between;
@@ -110,7 +125,6 @@
     .h-sub { font-size: 10px; color: var(--muted); }
     .del-btn { color: #fff; border: none; background: #ffb5d2; border-radius: 10px; width: 32px; height: 32px; font-weight: bold; }
 
-    /* 通知トースト */
     .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
     .toast { background: #fff; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; display: flex; gap: 15px; align-items: center; opacity: 0; transform: translateY(20px); transition: .4s; border: 3px solid #ffdeeb; }
     .toast.show { opacity: 1; transform: translateY(0); }
@@ -165,9 +179,9 @@
           
           <div class="btn-group">
             <button class="stamp-btn" type="submit" id="subBtn">
+              <span class="btn-inner-label">記録する！</span>
               <img src="stamp.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/todo-list.png'">
             </button>
-            <span class="btn-label">記録する！</span>
           </div>
         </div>
       </form>
@@ -238,12 +252,9 @@
       b.disabled = true;
       const fd = new FormData(e.target); 
       fd.set("amount", fd.get("amount").replace(/[^0-9]/g, ""));
-      
       const tst = document.getElementById("tst");
       tst.classList.add("show");
-      
       await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true });
-      
       setTimeout(() => { tst.classList.remove("show"); }, 2500);
       e.target.reset(); 
       load(); 
