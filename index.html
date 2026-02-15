@@ -15,28 +15,25 @@
     html,body{ margin:0; padding:0; background: var(--bg); font-family: sans-serif; height: 100%; overflow: hidden; }
     *{ box-sizing: border-box; touch-action: manipulation; }
 
-    /* ② 画像表示の修正（より確実な方法） */
-    body::after {
-      content: "";
-      position: fixed; inset: 0; z-index: -1;
-      opacity: 0.15;
+    /* 背景画像の完全背面固定 */
+    #bg-layer {
+      position: fixed; inset: 0; z-index: -1; opacity: 0.15;
       background-image: url('icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png');
-      background-repeat: no-repeat;
-      background-position: center 25%;
-      background-size: min(320px, 80vw);
-      pointer-events: none;
+      background-repeat: no-repeat; background-position: center 25%;
+      background-size: min(320px, 80vw); pointer-events: none;
     }
 
     .page { max-width: 500px; margin: 0 auto; padding: 12px; height: 100svh; overflow-y: auto; position: relative; z-index: 1; }
     
-    .title-area { margin-bottom: 12px; text-align: left; }
-    .title-main { font-size: 22px; font-weight: 900; margin: 0; }
+    .title-area { margin-bottom: 12px; }
+    .title-main { font-size: 24px; font-weight: 900; margin: 0; }
+    .title-sub { font-size: 12px; color: var(--muted); margin: 0; }
 
     .budget-card {
       background: rgba(255,255,255,0.85); border-radius: 16px; padding: 12px;
       margin-bottom: 12px; backdrop-filter: blur(5px);
     }
-    .budget-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; }
+    .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; }
     .budget-bar-bg { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 8px; }
     .budget-bar-fill { height: 100%; background: #34d399; width: 0%; transition: width 0.8s ease; }
 
@@ -48,44 +45,47 @@
     .currency-symbol { position: absolute; left: 14px; font-weight: 900; font-size: 22px; color: var(--pink); }
     input[name="amount"] { padding-left: 38px !important; font-size: 26px !important; font-weight: 900; color: var(--pink); border: 2px solid #fce7f3; }
 
-    /* ③ 入力フィールドの高さ統一 */
     input, select, textarea {
       width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; 
-      padding: 12px; height: 48px; /* 高さを48pxに固定 */
-      font-size: 16px; outline: none; margin-bottom: 12px; background: #fff;
+      padding: 12px; height: 48px; font-size: 16px; outline: none; margin-bottom: 12px; background: #fff;
     }
-    textarea { height: 60px; } /* メモだけは少し高く */
-
-    /* ③ 日付欄の特別調整（ブラウザ標準のデザインを抑制） */
-    input[type="date"] {
-        display: flex;
-        align-items: center;
-        appearance: none; -webkit-appearance: none;
-    }
+    textarea { height: 60px; }
+    input[type="date"] { appearance: none; -webkit-appearance: none; }
 
     .btn {
       width: 100%; border: none; border-radius: 14px; padding: 16px; height: 56px;
       background: var(--btnColor); color: #fff; font-weight: 900; font-size: 18px;
     }
 
+    /* 履歴リスト */
     .history-item {
       background: rgba(255,255,255,0.7); border-radius: 12px; padding: 10px 14px;
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
     }
-    .h-cat { font-size: 11px; color: #999; }
-    .h-memo { font-weight: bold; font-size: 15px; }
+    .del-btn { color: #f87171; border: none; background: #fee2e2; border-radius: 8px; width: 32px; height: 32px; font-weight: bold; }
+
+    /* 通知トースト */
+    .toastWrap{ position:fixed; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center; z-index:999; }
+    .toast{
+      background: rgba(255,255,255,.95); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,.2);
+      padding: 20px; display:flex; gap: 16px; align-items:center; opacity:0; transform: translateY(20px); transition: .3s;
+    }
+    .toast.show{ opacity:1; transform: translateY(0); }
+    .toast img{ width: 60px; height: 60px; object-fit:contain; }
   </style>
 </head>
 
 <body>
+  <div id="bg-layer"></div>
   <div class="page">
     <div class="title-area">
       <h1 class="title-main">名和家の家計簿！</h1>
+      <p class="title-sub">家計管理、お疲れ様です！</p>
     </div>
 
-    <div class="budget-card" id="budgetCard">
+    <div class="budget-card">
       <div class="budget-info">
-        <span>今月の実績/予算</span>
+        <span>今月の実績 / 予算</span>
         <span>¥<span id="currentTotal">0</span> / ¥<span id="budgetLimit">0</span></span>
       </div>
       <div class="budget-bar-bg"><div class="budget-bar-fill" id="budgetBar"></div></div>
@@ -98,19 +98,14 @@
           <span class="currency-symbol">¥</span>
           <input name="amount" type="tel" inputmode="numeric" placeholder="0" required>
         </div>
-
         <label>カテゴリ</label>
         <select id="category" name="category" required></select>
-
         <label>支払方法</label>
         <select id="method" name="method" required></select>
-
         <label>店名・メモ（任意）</label>
         <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
-
-        <label>日付（空欄なら今日）</label>
+        <label>日付</label>
         <input name="date" type="date">
-
         <button class="btn" type="submit" id="submitBtn">記録する</button>
       </form>
     </div>
@@ -121,20 +116,27 @@
     </div>
   </div>
 
+  <div class="toastWrap">
+    <div class="toast" id="toast">
+      <img src="icons/icon-180.png" onerror="this.src='https://img.icons8.com/color/96/ok--v1.png'">
+      <div>
+        <div style="font-weight:900; font-size:18px;">登録しました！</div>
+        <div style="font-size:12px; color:#666;">履歴に追加しました♪</div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
 
     async function loadData() {
         const data = await jsonp(GAS_URL + "?action=master");
-        
-        // ① 実績 / 予算 の順で表示
         document.getElementById("currentTotal").textContent = Math.floor(data.budget.total).toLocaleString();
         document.getElementById("budgetLimit").textContent = Math.floor(data.budget.limit).toLocaleString();
         document.getElementById("budgetBar").style.width = data.budget.percent + "%";
 
         const fill = (id, list) => {
-          const el = document.getElementById(id);
-          el.innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join('');
+          document.getElementById(id).innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join('');
         };
         fill("category", data.categories);
         fill("method", data.methods);
@@ -142,13 +144,22 @@
         document.getElementById("historyList").innerHTML = data.history.map(h => `
           <div class="history-item">
             <div>
-              <div class="h-memo">${h.memo || h.category}</div>
-              <div class="h-cat">${h.date} · ${h.category}</div>
+              <div style="font-weight:bold;">${h.memo || h.category}</div>
+              <div style="font-size:11px; color:#999;">${h.date} · ${h.category}</div>
             </div>
-            <span style="font-weight:900; font-size:16px;">¥${Math.floor(h.amount).toLocaleString()}</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-weight:900;">¥${h.amount.toLocaleString()}</span>
+              <button class="del-btn" onclick="deleteItem('${h.id}')">×</button>
+            </div>
           </div>
         `).join('');
     }
+
+    window.deleteItem = async (id) => {
+      if(!confirm("削除しますか？")) return;
+      await fetch(GAS_URL + "&action=delete&rowId=" + id, { method: "POST" });
+      loadData();
+    };
 
     document.getElementById("f").addEventListener("submit", async (ev) => {
       ev.preventDefault();
@@ -157,11 +168,19 @@
       const fd = new FormData(ev.target);
       const amt = fd.get("amount").replace(/[^0-9]/g, "");
       fd.set("amount", amt);
+
+      showToast(); // 通知を表示
       await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true });
       ev.target.reset();
       loadData();
       btn.disabled = false;
     });
+
+    function showToast() {
+      const t = document.getElementById("toast");
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2500);
+    }
 
     function jsonp(url) {
       return new Promise(res => {
