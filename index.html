@@ -86,7 +86,7 @@
     label{ font-size:14px; color:var(--muted); margin-bottom:4px; display:block;}
     
     input,select,textarea{
-      width:100%; max-width: 100%; /* はみ出し防止 */
+      width:100%; max-width: 100%;
       border:1px solid rgba(229,231,235,.95);
       border-radius: 18px; padding: 14px;
       background: rgba(255,255,255,.92);
@@ -95,15 +95,14 @@
     }
     textarea{ height: 80px; resize:none;}
 
-    /* 日付欄の特別調整：はみ出し防止 */
     input[type="date"] {
-        padding: 10px 14px; /* 上下パディングを少し減らす */
-        font-size: 16px; /* 文字サイズを少し落として収まりよくする */
+        padding: 10px 14px;
+        font-size: 16px;
         min-width: 0;
-        -webkit-appearance: none; /* iOS固有のスタイルリセット */
+        -webkit-appearance: none;
     }
 
-    /* 送信ボタン（ローディング対応） */
+    /* 送信ボタン */
     .btn{
       width:100%; border:none; border-radius: 20px;
       padding: 16px;
@@ -117,22 +116,9 @@
     }
     .btn:active{ transform: scale(0.98); }
     .btn:disabled {
-        background: #ccc; cursor: not-allowed; box-shadow: none; transform: none;
+        opacity: 0.7; transform: scale(0.98); cursor: default;
     }
     
-    /* ローディングスピナー */
-    .spinner {
-        display: none;
-        width: 20px; height: 20px;
-        border: 3px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        animation: spin 1s ease-in-out infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .btn.loading .spinner { display: block; }
-    .btn.loading span { display: none; }
-
     .hint{ font-size: 12px; color:var(--muted); line-height:1.4; padding: 4px;}
 
     /* トースト */
@@ -197,7 +183,6 @@
 
         <button class="btn" type="submit" id="submitBtn">
             <span>記録する</span>
-            <div class="spinner"></div>
         </button>
 
         <div class="hint">
@@ -212,7 +197,7 @@
       <img id="kuromiImg" alt="Success">
       <div>
         <div class="t1">登録しました！</div>
-        <div style="font-size:14px; color:#666;">家計簿への反映完了♪</div>
+        <div style="font-size:14px; color:#666;">（裏で送信しています）</div>
       </div>
     </div>
   </div>
@@ -223,11 +208,8 @@
     // ==========================================
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
     
-    // 【重要】前回指定していたローカル画像のパスをここに復活させました
-    // もし変更したい場合はここを書き換えてください（空にすればGASの設定に従います）
+    // 画像設定（フォルダ内の画像を優先）
     const POM_OVERRIDE_URL = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png";
-
-    // キャッシュのキー
     const CACHE_KEY = "nawa_kakeibo_master_v1";
 
     // ==========================================
@@ -240,23 +222,20 @@
         const cached = localStorage.getItem(CACHE_KEY);
         if (!forceReload && cached) {
             applyMasterData(JSON.parse(cached));
-            console.log("Used Cache");
             return;
         }
 
         try {
-            // 強制更新時はプルダウンをリセット
             if(forceReload) {
                 catSelect.innerHTML = "<option>読み込み中...</option>";
                 metSelect.innerHTML = "<option>読み込み中...</option>";
             }
-
             const data = await jsonp(GAS_URL + "?action=master");
             localStorage.setItem(CACHE_KEY, JSON.stringify(data));
             applyMasterData(data);
             if(forceReload) alert("最新データを読み込みました！");
         } catch(e) {
-            alert("読み込みエラー: " + e.message);
+            if(!cached) alert("読み込みエラー: " + e.message);
         }
     }
 
@@ -272,44 +251,42 @@
                 sel.appendChild(op);
             });
         };
-
         setOpts(document.getElementById("category"), data.categories || []);
         setOpts(document.getElementById("method"), data.methods || []);
 
-        // 画像の設定（POM_OVERRIDE_URLを最優先）
         const pomUrl = (POM_OVERRIDE_URL && POM_OVERRIDE_URL.trim()) ? POM_OVERRIDE_URL : (data.pomUrls && data.pomUrls[0]);
         if (pomUrl) {
             document.body.classList.add("hasPom");
             document.body.style.setProperty("--pomBg", `url("${pomUrl}")`);
         }
-        
-        // クロミちゃん画像のURLがあればセット（なければそのまま）
         if (data.kuromiUrls && data.kuromiUrls.length) {
             document.getElementById("kuromiImg").src = data.kuromiUrls[0];
         }
     }
 
-    // ==========================================
-    // 初期化処理
-    // ==========================================
     window.addEventListener("DOMContentLoaded", () => {
         loadMasterData();
         document.getElementById("refreshBtn").onclick = () => loadMasterData(true);
     });
 
     // ==========================================
-    // 3. 送信処理 (Loading & Date Fix)
+    // 2. 爆速送信 (Optimistic UI + Keepalive)
     // ==========================================
-    document.getElementById("f").addEventListener("submit", async (ev) => {
+    document.getElementById("f").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const btn = document.getElementById("submitBtn");
         const fd = new FormData(ev.target);
 
-        // UI制御
+        // --- ① UIを即座に成功状態にする（楽観的UI） ---
+        showToast();   // 「完了」表示
+        ev.target.reset(); // フォームをリセット
+        document.activeElement.blur(); // キーボードを閉じる
+        
+        // 連打防止のため一瞬だけ無効化（0.5秒で復活）
         btn.disabled = true;
-        btn.classList.add("loading");
+        setTimeout(() => btn.disabled = false, 500);
 
-        // 日付補正：空ならJSで「日本時間の今日」を生成してセット
+        // --- ② データ整形 ---
         let dateVal = fd.get("date");
         if (!dateVal) {
             const now = new Date();
@@ -323,26 +300,28 @@
         const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
         fd.set("amount", a);
 
-        try {
-            const res = await fetch(GAS_URL, { method: "POST", body: fd });
-            const js = await res.json();
-            
-            if (!js.ok) throw new Error(js.error || "不明なエラー");
-
-            showToast();
-            ev.target.reset();
-        } catch(e) {
-            alert("送信失敗: " + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.classList.remove("loading");
-        }
+        // --- ③ 裏で送信 (Fire and Forget) ---
+        // keepalive: true により、ブラウザを閉じても送信が継続される
+        fetch(GAS_URL, { 
+            method: "POST", 
+            body: fd, 
+            keepalive: true 
+        }).then(res => res.json())
+          .then(js => {
+              if (!js.ok) {
+                  // 万が一失敗した場合は遅れてアラート（稀なケース）
+                  alert("【注意】送信に失敗した可能性があります。\n" + (js.error || ""));
+              }
+          })
+          .catch(e => {
+              alert("【通信エラー】送信できませんでした。\nネット環境を確認してください。");
+          });
     });
 
     function showToast(){
         const t = document.getElementById("toast");
         t.classList.add("show");
-        setTimeout(() => t.classList.remove("show"), 3000);
+        setTimeout(() => t.classList.remove("show"), 2500);
     }
 
     function jsonp(url) {
