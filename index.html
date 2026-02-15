@@ -6,126 +6,60 @@
   <title>名和家の家計簿！</title>
   <style>
     :root{
-      --ink: #444;
-      --muted: #888;
-      --bg-pink: #fff0f5;
-      --bg-purple: #f3f0ff;
-      --accent-pink: #ff7eb3;
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --border-thick: 2.5px;
-      --stamp-size: 86px;
+      --ink: #444; --muted: #888;
+      --bg-pink: #fff0f5; --bg-purple: #f3f0ff; --accent-pink: #ff7eb3;
+      --card-bg: rgba(255, 255, 255, 0.85); --border-thick: 2.5px;
+      --stamp-size: 84px; /* ボタンサイズを大きく */
     }
-
     html,body{
-      margin:0; padding:0;
-      background: linear-gradient(135deg, var(--bg-pink) 0%, var(--bg-purple) 100%);
-      background-attachment: fixed;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin:0; padding:0; background: linear-gradient(135deg, var(--bg-pink) 0%, var(--bg-purple) 100%);
+      background-attachment: fixed; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       height: 100%; overflow: hidden; color: var(--ink);
     }
     *{ box-sizing: border-box; touch-action: manipulation; }
-
-    .page { 
-      max-width: 500px; margin: 0 auto; padding: 10px; height: 100svh; 
-      overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; 
-    }
+    .page { max-width: 500px; margin: 0 auto; padding: 10px; height: 100svh; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; }
     
+    /* 右上透過画像：サイズ微調整 */
     .header { position: relative; margin-bottom: 8px; min-height: 105px; padding: 10px 5px 0; }
     .title-group { position: relative; z-index: 2; padding-right: 100px; } 
     .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #555; }
-    .title-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
-    
-    .top-icon {
-      position: absolute; 
-      right: 5px; top: 0px; 
-      width: 110px; height: 110px; object-fit: contain; 
-      opacity: 0.35;
-      z-index: 0;
-      pointer-events: none;
-    }
+    .title-sub { font-size: 11.5px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
+    .top-icon { position: absolute; right: 5px; top: 0px; width: 110px; height: 110px; object-fit: contain; opacity: 0.35; z-index: 0; pointer-events: none; }
 
     .budget-card {
-      position: relative; z-index: 2;
-      background: #fff; border-radius: 20px; padding: 16px;
-      margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-      border: var(--border-thick) solid #fff;
+      position: relative; z-index: 2; background: #fff; border-radius: 20px; padding: 16px;
+      margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: var(--border-thick) solid #fff;
     }
     .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: var(--accent-pink); }
     .budget-bar-bg { height: 12px; background: #f5f5f5; border-radius: 6px; overflow: hidden; margin-top: 8px; }
     .budget-bar-fill { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); width: 0%; transition: width 1s ease; }
 
-    .card {
-      background: var(--card-bg); border-radius: 24px; padding: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-      border: var(--border-thick) solid #fff;
-      backdrop-filter: blur(5px);
-    }
+    .card { background: var(--card-bg); border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: var(--border-thick) solid #fff; backdrop-filter: blur(5px); }
     label { font-size: 10.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: bold; padding-left: 4px; white-space: nowrap; }
     
     .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 12px; }
     .currency { position: absolute; left: 15px; font-weight: 900; font-size: 24px; color: var(--accent-pink); }
-    input[name="amount"] {
-      padding-left: 45px !important; font-size: 28px !important; font-weight: 900;
-      color: var(--accent-pink); border: 2px solid #ffe0ec !important;
-      background: #fff !important; border-radius: 16px;
-    }
+    input[name="amount"] { padding-left: 45px !important; font-size: 28px !important; font-weight: 900; color: var(--accent-pink); border: 2px solid #ffe0ec !important; background: #fff !important; border-radius: 16px; }
 
-    input, select {
-      width: 100%; border: 1.5px solid #eee; border-radius: 14px;
-      padding: 0 12px; height: 46px; font-size: 15px; outline: none;
-      margin-bottom: 12px; background: #fff;
-    }
+    input, select { width: 100%; border: 1.5px solid #eee; border-radius: 14px; padding: 0 12px; height: 46px; font-size: 15px; outline: none; margin-bottom: 12px; background: #fff; }
 
-    /* レイアウト調整：日付を短く、ボタンを主役に */
-    .row-flex { display: flex; gap: 15px; align-items: flex-end; margin-top: 5px; }
-    .date-box { flex: 0.45; min-width: 0; } /* 幅を抑制 */
+    /* レイアウト調整：日付を適正な長さに */
+    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 5px; }
+    .date-box { flex: 0.52; min-width: 0; } 
     .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
 
-    .btn-group { flex: 0.55; display: flex; flex-direction: column; align-items: center; }
-    
+    .btn-group { flex: 0.48; display: flex; flex-direction: column; align-items: center; }
     .stamp-btn {
       width: var(--stamp-size); height: var(--stamp-size); border-radius: 22px;
-      border: 3px solid #fff; 
-      background: linear-gradient(135deg, #ffbdc0, #fecfef);
-      box-shadow: 0 5px 0px rgba(255, 126, 179, 0.2);
-      cursor: pointer; position: relative;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.1s; padding: 0; overflow: hidden;
+      border: 3px solid #fff; background: linear-gradient(135deg, #ffbdc0, #fecfef);
+      box-shadow: 0 5px 0px rgba(255, 126, 179, 0.2); cursor: pointer; position: relative;
+      display: flex; align-items: center; justify-content: center; transition: all 0.1s; padding: 0; overflow: hidden;
     }
-
-    /* ボタン内のテキスト：最上部に移動して透過 */
-    .btn-inner-label { 
-      position: absolute;
-      top: 8px; /* 上端から8pxの位置に固定 */
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%; text-align: center;
-      font-size: 10px; 
-      font-weight: 900; 
-      color: #fff; 
-      opacity: 0.65; /* 透過 */
-      letter-spacing: 0.5px;
-      z-index: 2;
-      pointer-events: none;
-      text-shadow: 0 0 4px rgba(0,0,0,0.2);
-    }
-
-    .stamp-btn img { 
-      width: 90%; 
-      height: 90%; 
-      object-fit: contain;
-      position: relative;
-      z-index: 1;
-      margin-top: 4px; /* 少し下げてテキストとの重なりを調整 */
-    }
-    
+    .btn-inner-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 100%; text-align: center; font-size: 10px; font-weight: 900; color: #fff; opacity: 0.65; z-index: 2; pointer-events: none; text-shadow: 0 0 4px rgba(0,0,0,0.2); }
+    .stamp-btn img { width: 90%; height: 90%; object-fit: contain; position: relative; z-index: 1; margin-top: 4px; }
     .stamp-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px rgba(255, 126, 179, 0.2); }
 
-    .history-item {
-      background: rgba(255, 255, 255, 0.7); border-radius: 18px;
-      padding: 10px 15px; display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 8px; border: 1.5px solid #fff;
-    }
+    .history-item { background: rgba(255, 255, 255, 0.7); border-radius: 18px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1.5px solid #fff; }
     .h-memo { font-weight: bold; font-size: 14px; }
     .h-sub { font-size: 10px; color: var(--muted); }
     .del-btn { color: #fff; border: none; background: #ffb5d2; border-radius: 10px; width: 32px; height: 32px; font-weight: bold; }
@@ -157,31 +91,18 @@
     <div class="card">
       <form id="f">
         <label>金額</label>
-        <div class="amount-wrapper">
-          <span class="currency">¥</span>
-          <input name="amount" type="tel" inputmode="numeric" placeholder="0" required>
-        </div>
+        <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
 
         <div style="display:flex; gap:10px; margin-bottom:12px;">
-          <div style="flex:1.2;">
-            <label>カテゴリ</label>
-            <select id="category" name="category" required style="margin-bottom:0;"></select>
-          </div>
-          <div style="flex:1;">
-            <label>支払方法</label>
-            <select id="method" name="method" required style="margin-bottom:0;"></select>
-          </div>
+          <div style="flex:1.2;"><label>分類（食費等）</label><select id="category" name="category" required style="margin-bottom:0;"></select></div>
+          <div style="flex:1;"><label>支払方法</label><select id="method" name="method" required style="margin-bottom:0;"></select></div>
         </div>
 
-        <label>店名・メモ（任意）</label>
+        <label>カテゴリ（自由記入欄）</label>
         <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
 
         <div class="row-flex">
-          <div class="date-box">
-            <label>日付（空欄は今日扱い）</label>
-            <input name="date" type="date">
-          </div>
-          
+          <div class="date-box"><label>日付（空欄は今日扱い）</label><input name="date" type="date"></div>
           <div class="btn-group">
             <button class="stamp-btn" type="submit" id="subBtn">
               <span class="btn-inner-label">記録する！</span>
@@ -198,74 +119,36 @@
     </div>
   </div>
 
-  <div class="toastWrap">
-    <div class="toast" id="tst">
-      <img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'">
-      <div>
-        <div style="font-weight:900; font-size:20px; color:var(--accent-pink);">登録完了！</div>
-        <div style="font-size:12px; color:#a0a0b0;">家計簿を更新したよ♪</div>
-      </div>
-    </div>
-  </div>
+  <div class="toastWrap"><div class="toast" id="tst"><img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'"><div><div style="font-weight:900; font-size:20px; color:var(--accent-pink);">登録完了！</div><div style="font-size:12px; color:#a0a0b0;">家計簿を更新したよ♪</div></div></div></div>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
-
-    const messages = [
-        "登録作業、いつもありがとう！",
-        "体調は大丈夫？しっかり寝てね",
-        "今日も一日、お疲れ様！",
-        "無理しないで、ゆっくり休んでね",
-        "いつも家計を支えてくれて感謝！",
-        "美味しいもの食べてリラックス♪",
-        "少しずつ、理想の家計へ！",
-        "明日も素敵な一日になりますように",
-        "あなたの頑張り、見てるよ",
-        "今日も100点！自分を褒めてね"
-    ];
+    const messages = ["登録作業、いつもありがとう！","体調は大丈夫？しっかり寝てね","今日も一日、お疲れ様！","無理しないで、ゆっくり休んでね","いつも家計を支えてくれて感謝！","美味しいもの食べてリラックス♪","少しずつ、理想の家計へ！","明日も素敵な一日になりますように","あなたの頑張り、見てるよ","今日も100点！自分を褒めてね"];
 
     async function load() {
       const msgEl = document.getElementById("randomMsg");
       msgEl.textContent = messages[Math.floor(Math.random() * messages.length)];
-
       const d = await jsonp(GAS_URL + "?action=master");
       document.getElementById("cur").textContent = Math.floor(d.budget.total).toLocaleString();
       document.getElementById("lim").textContent = Math.floor(d.budget.limit).toLocaleString();
       document.getElementById("bar").style.width = d.budget.percent + "%";
-      
       const f = (i, l) => { document.getElementById(i).innerHTML = l.map(v => `<option value="${v}">${v}</option>`).join(''); };
       f("category", d.categories); f("method", d.methods);
-      
       document.getElementById("hList").innerHTML = d.history.map(h => `
         <div class="history-item">
-          <div>
-            <div class="h-memo">${h.memo || h.category}</div>
-            <div class="h-sub">${h.date} · ${h.category}</div>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${h.amount.toLocaleString()}</span>
-            <button class="del-btn" onclick="del('${h.id}')">×</button>
-          </div>
+          <div><div class="h-memo">${h.memo || h.category}</div><div class="h-sub">${h.date} · ${h.category}</div></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${h.amount.toLocaleString()}</span><button class="del-btn" onclick="del('${h.id}')">×</button></div>
         </div>`).join('');
     }
-
     window.del = async (id) => { if(!confirm("この記録を消してもいい？")) return; await fetch(GAS_URL + "&action=delete&rowId=" + id, { method: "POST" }); load(); };
-
     document.getElementById("f").addEventListener("submit", async (e) => {
-      e.preventDefault(); 
-      const b = document.getElementById("subBtn"); 
-      b.disabled = true;
-      const fd = new FormData(e.target); 
-      fd.set("amount", fd.get("amount").replace(/[^0-9]/g, ""));
-      const tst = document.getElementById("tst");
-      tst.classList.add("show");
+      e.preventDefault(); const b = document.getElementById("subBtn"); b.disabled = true;
+      const fd = new FormData(e.target); fd.set("amount", fd.get("amount").replace(/[^0-9]/g, ""));
+      const tst = document.getElementById("tst"); tst.classList.add("show");
       await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true });
       setTimeout(() => { tst.classList.remove("show"); }, 2500);
-      e.target.reset(); 
-      load(); 
-      b.disabled = false;
+      e.target.reset(); load(); b.disabled = false;
     });
-
     function jsonp(u) { return new Promise(r => { const c = "cb" + Date.now(); window[c] = d => { r(d); delete window[c]; s.remove(); }; const s = document.createElement("script"); s.src = `${u}&callback=${c}`; document.head.appendChild(s); }); }
     load();
   </script>
