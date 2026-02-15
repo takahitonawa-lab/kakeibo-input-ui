@@ -14,12 +14,10 @@
     :root{
       --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f7fb; --btnText:#fff;
       --k: .9;
-      --radius: calc(18px * var(--k));
+      --radius: 18px;
       --btnColor: linear-gradient(135deg, rgba(236,72,153,.92), rgba(167,139,250,.92));
-      
-      /* シャドウ系 */
-      --shadowSoft: 0 14px 30px rgba(17, 24, 39, .10);
-      --shadowPop:  0 18px 45px rgba(17, 24, 39, .18);
+      --danger: #ef4444;
+      --barBg: #e5e7eb; --barFill: #34d399; /* 予算バーの色：緑 */
     }
 
     html,body{
@@ -27,12 +25,12 @@
       color:var(--ink);
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       background: var(--bg);
-      overflow:hidden;
       height: 100%;
+      overflow: hidden;
     }
     *{ touch-action: manipulation; box-sizing:border-box; }
 
-    /* 背景 */
+    /* 背景装飾 */
     body::before{
       content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
       background:
@@ -52,85 +50,100 @@
 
     .page{
       max-width: 760px; margin:0 auto; height: 100svh;
-      padding: 12px; display:flex; flex-direction:column; gap: 10px;
+      padding: 12px; display:flex; flex-direction:column; gap: 12px;
       position:relative; z-index:1; overflow-y: auto;
+      padding-bottom: 80px; /* 下部の余白 */
     }
 
-    .header-row {
-        display: flex; justify-content: space-between; align-items: center;
-        margin: 6px 0 8px;
-    }
-    .title{ font-size:28px; font-weight:900; letter-spacing:.2px; margin:0;}
-    .subtitle{ font-size:14px; color:var(--muted); margin:0;}
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; }
+    .title{ font-size:24px; font-weight:900; margin:0;}
+    .subtitle{ font-size:12px; color:var(--muted); margin:0;}
     
-    /* 更新ボタン */
     .refresh-btn {
-        background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.1);
-        border-radius: 50%; width: 32px; height: 32px;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; color: var(--muted);
+        background: rgba(255,255,255,0.6); border-radius: 50%; width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted);
     }
     .refresh-btn svg { width: 18px; height: 18px; fill: currentColor; transition: transform 0.5s;}
     .refresh-btn:active svg { transform: rotate(180deg); }
 
+    /* 予算メーター */
+    .budget-card {
+        background: #fff; border-radius: 16px; padding: 12px 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 4px;
+        animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+
+    .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 6px; }
+    .budget-bar-bg { height: 10px; background: var(--barBg); border-radius: 5px; overflow: hidden; }
+    .budget-bar-fill { height: 100%; background: var(--barFill); width: 0%; transition: width 1s ease; }
+    .budget-bar-fill.warning { background: #fbbf24; } /* 80%超えで黄色 */
+    .budget-bar-fill.danger { background: #ef4444; }  /* 100%超えで赤 */
+
     .card{
-      background: rgba(255,255,255,.72);
-      border: 1px solid rgba(229,231,235,.85);
-      border-radius: 24px;
-      padding: 16px;
-      box-shadow: var(--shadowSoft);
+      background: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,0.9);
+      border-radius: 24px; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.06);
       backdrop-filter: blur(10px);
     }
 
     form{display:flex;flex-direction:column;gap:12px;}
-    label{ font-size:14px; color:var(--muted); margin-bottom:4px; display:block;}
+    label{ font-size:13px; color:var(--muted); margin-bottom:4px; display:block;}
     
     input,select,textarea{
-      width:100%; max-width: 100%;
-      border:1px solid rgba(229,231,235,.95);
-      border-radius: 18px; padding: 14px;
-      background: rgba(255,255,255,.92);
-      font-size:18px; outline:none;
-      box-shadow: 0 4px 10px rgba(0,0,0,.03);
+      width:100%; max-width: 100%; border:1px solid rgba(229,231,235,.95);
+      border-radius: 16px; padding: 12px; background: #fff;
+      font-size:16px; outline:none;
+      -webkit-appearance: none; appearance: none;
     }
-    textarea{ height: 80px; resize:none;}
+    textarea{ height: 60px; resize:none;}
+    input[type="date"] { min-width: 0; }
 
-    input[type="date"] {
-        padding: 10px 14px;
-        font-size: 16px;
-        min-width: 0;
-        -webkit-appearance: none;
-    }
-
-    /* 送信ボタン */
     .btn{
-      width:100%; border:none; border-radius: 20px;
-      padding: 16px;
-      background: var(--btnColor);
-      color:var(--btnText);
-      font-weight:900; font-size: 20px;
-      box-shadow: var(--shadowPop);
-      cursor:pointer; position:relative;
-      transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width:100%; border:none; border-radius: 18px; padding: 14px;
+      background: var(--btnColor); color:var(--btnText);
+      font-weight:900; font-size: 18px; box-shadow: 0 8px 20px rgba(236, 72, 153, 0.3);
+      cursor:pointer; position:relative; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.1s;
     }
     .btn:active{ transform: scale(0.98); }
-    .btn:disabled {
-        opacity: 0.7; transform: scale(0.98); cursor: default;
+    .btn:disabled { opacity: 0.7; transform: none; cursor: default; }
+    
+    .spinner { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn.loading .spinner { display: block; } .btn.loading span { display: none; }
+
+    /* 履歴リスト */
+    .history-section { margin-top: 10px; }
+    .history-title { font-size: 14px; color: var(--muted); margin-bottom: 8px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
+    .analytics-link { 
+        font-size: 12px; color: #3b82f6; text-decoration: none; 
+        display: flex; align-items: center; gap: 4px; padding: 4px 8px;
+        background: rgba(59, 130, 246, 0.1); border-radius: 6px;
     }
     
-    .hint{ font-size: 12px; color:var(--muted); line-height:1.4; padding: 4px;}
+    .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .history-item {
+        background: rgba(255,255,255,0.6); border-radius: 12px; padding: 10px 14px;
+        display: flex; justify-content: space-between; align-items: center; font-size: 14px;
+        border: 1px solid rgba(0,0,0,0.03); transition: opacity 0.3s;
+    }
+    .h-left { display: flex; flex-direction: column; gap: 2px; }
+    .h-cat { font-weight: bold; font-size: 15px; }
+    .h-meta { font-size: 11px; color: var(--muted); }
+    .h-right { display: flex; align-items: center; gap: 10px; }
+    .h-amount { font-weight: bold; font-size: 16px; color: var(--ink); }
+    .del-btn {
+        background: #fee2e2; color: #ef4444; border: none; border-radius: 8px;
+        width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 18px; margin-left: 8px;
+    }
 
     /* トースト */
-    .toastWrap{
-      position:fixed; inset:0; pointer-events:none;
-      display:flex; align-items:center; justify-content:center; z-index:999;
-    }
+    .toastWrap{ position:fixed; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center; z-index:999; }
     .toast{
-      pointer-events:none; background: rgba(255,255,255,.95);
-      border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,.2);
+      background: rgba(255,255,255,.95); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,.2);
       padding: 20px; display:flex; gap: 16px; align-items:center;
-      opacity:0; transform: translateY(20px); transition: .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      opacity:0; transform: translateY(20px); transition: .3s;
     }
     .toast.show{ opacity:1; transform: translateY(0); }
     .toast img{ width: 80px; height: 80px; object-fit:contain; }
@@ -145,8 +158,21 @@
         <div class="title">名和家の家計簿！</div>
         <div class="subtitle">今日も一日お疲れ様！</div>
       </div>
-      <div class="refresh-btn" id="refreshBtn" title="データを再読み込み">
+      <div class="refresh-btn" id="refreshBtn" title="更新">
         <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </div>
+    </div>
+
+    <div class="budget-card" id="budgetCard" style="display:none;">
+      <div class="budget-info">
+        <span id="monthLabel">今月の出費</span>
+        <span><span id="currentTotal">0</span>円 / <span id="budgetLimit">0</span>円</span>
+      </div>
+      <div class="budget-bar-bg">
+        <div class="budget-bar-fill" id="budgetBar"></div>
+      </div>
+      <div style="text-align:right; font-size:11px; color:#6b7280; margin-top:4px;">
+        消費率: <span id="percentLabel">0%</span>
       </div>
     </div>
 
@@ -159,16 +185,12 @@
 
         <div>
           <label>カテゴリ（必須）</label>
-          <select id="category" name="category" required>
-            <option value="">(読み込み中...)</option>
-          </select>
+          <select id="category" name="category" required><option value="">(読み込み中...)</option></select>
         </div>
 
         <div>
           <label>支払方法（必須）</label>
-          <select id="method" name="method" required>
-            <option value="">(読み込み中...)</option>
-          </select>
+          <select id="method" name="method" required><option value="">(読み込み中...)</option></select>
         </div>
 
         <div>
@@ -183,12 +205,21 @@
 
         <button class="btn" type="submit" id="submitBtn">
             <span>記録する</span>
+            <div class="spinner"></div>
         </button>
-
-        <div class="hint">
-          ※カテゴリ・支払方法が出ない場合は右上の更新ボタンを押してね
-        </div>
       </form>
+    </div>
+
+    <div class="history-section">
+        <div class="history-title">
+            <span>直近の記録</span>
+            <a href="https://lookerstudio.google.com/" target="_blank" class="analytics-link">
+                📊 グラフで見る
+            </a>
+        </div>
+        <ul class="history-list" id="historyList">
+            <li style="text-align:center; color:#999; font-size:12px; padding:10px;">履歴を読み込み中...</li>
+        </ul>
     </div>
   </div>
 
@@ -197,7 +228,7 @@
       <img id="kuromiImg" alt="Success">
       <div>
         <div class="t1">登録しました！</div>
-        <div style="font-size:14px; color:#666;">（協力ありがとう♪）</div>
+        <div style="font-size:14px; color:#666;">履歴に追加されます</div>
       </div>
     </div>
   </div>
@@ -206,54 +237,60 @@
     // ==========================================
     // 設定エリア
     // ==========================================
+    // Masterから頂いたデプロイIDのURL
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
     
-    // 画像設定（フォルダ内の画像を優先）
+    // 【重要】前回指定していたローカル画像のパス
     const POM_OVERRIDE_URL = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png";
-    const CACHE_KEY = "nawa_kakeibo_master_v1";
+    
+    // バージョンを変えてキャッシュをリフレッシュさせる
+    const CACHE_KEY = "nawa_kakeibo_v2_history"; 
 
     // ==========================================
-    // 1. 高速化ロジック (Cache First)
+    // データ読み込みロジック (キャッシュ + 非同期更新)
     // ==========================================
-    async function loadMasterData(forceReload = false) {
-        const catSelect = document.getElementById("category");
-        const metSelect = document.getElementById("method");
-
+    async function loadData(force = false) {
         const cached = localStorage.getItem(CACHE_KEY);
-        if (!forceReload && cached) {
-            applyMasterData(JSON.parse(cached));
-            return;
-        }
-
-        try {
-            if(forceReload) {
-                catSelect.innerHTML = "<option>読み込み中...</option>";
-                metSelect.innerHTML = "<option>読み込み中...</option>";
-            }
-            const data = await jsonp(GAS_URL + "?action=master");
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-            applyMasterData(data);
-            if(forceReload) alert("最新データを読み込みました！");
-        } catch(e) {
-            if(!cached) alert("読み込みエラー: " + e.message);
+        
+        // キャッシュがあればまず表示してUIをブロックしない
+        if (!force && cached) {
+            renderUI(JSON.parse(cached));
+            // 裏で最新を取りに行く（履歴などの更新のため）
+            fetchLatestData(); 
+        } else {
+            // キャッシュがない場合、または強制更新時は待つ
+            await fetchLatestData();
         }
     }
 
-    function applyMasterData(data) {
-        const setOpts = (sel, items) => {
-            sel.innerHTML = "";
-            const op0 = document.createElement("option");
-            op0.value = ""; op0.textContent = "選択してください";
-            sel.appendChild(op0);
-            items.forEach(v => {
-                const op = document.createElement("option");
-                op.value = v; op.textContent = v;
-                sel.appendChild(op);
-            });
-        };
-        setOpts(document.getElementById("category"), data.categories || []);
-        setOpts(document.getElementById("method"), data.methods || []);
+    async function fetchLatestData() {
+        try {
+            const data = await jsonp(GAS_URL + "?action=master");
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            renderUI(data);
+        } catch(e) { console.error("Fetch Error:", e); }
+    }
 
+    function renderUI(data) {
+        // 1. プルダウン生成
+        const setOpts = (id, items) => {
+            const el = document.getElementById(id);
+            // ユーザーが選択中の場合は上書きして邪魔しない
+            if(el.options.length > 1 && el.value) return; 
+            
+            el.innerHTML = '<option value="">選択してください</option>';
+            if(items) {
+                items.forEach(v => {
+                    const op = document.createElement("option");
+                    op.value = v; op.textContent = v;
+                    el.appendChild(op);
+                });
+            }
+        };
+        setOpts("category", data.categories);
+        setOpts("method", data.methods);
+
+        // 2. 画像設定
         const pomUrl = (POM_OVERRIDE_URL && POM_OVERRIDE_URL.trim()) ? POM_OVERRIDE_URL : (data.pomUrls && data.pomUrls[0]);
         if (pomUrl) {
             document.body.classList.add("hasPom");
@@ -262,31 +299,89 @@
         if (data.kuromiUrls && data.kuromiUrls.length) {
             document.getElementById("kuromiImg").src = data.kuromiUrls[0];
         }
+
+        // 3. 予算メーター更新
+        if (data.budget) {
+            document.getElementById("budgetCard").style.display = "block";
+            document.getElementById("currentTotal").textContent = data.budget.total.toLocaleString();
+            document.getElementById("budgetLimit").textContent = data.budget.limit.toLocaleString();
+            document.getElementById("percentLabel").textContent = data.budget.percent + "%";
+            
+            const bar = document.getElementById("budgetBar");
+            bar.style.width = data.budget.percent + "%";
+            bar.className = "budget-bar-fill";
+            if(data.budget.percent > 80) bar.classList.add("warning"); // 黄色
+            if(data.budget.percent > 100) bar.classList.add("danger"); // 赤
+        }
+
+        // 4. 履歴リスト更新
+        const list = document.getElementById("historyList");
+        list.innerHTML = "";
+        if(!data.history || data.history.length === 0) {
+            list.innerHTML = '<li style="text-align:center; color:#999; font-size:12px; padding:10px;">まだ履歴がありません</li>';
+        } else {
+            data.history.forEach(h => {
+                const li = document.createElement("li");
+                li.className = "history-item";
+                // 削除ボタン付きのHTMLを生成
+                li.innerHTML = `
+                    <div class="h-left">
+                        <span class="h-cat">${h.category}</span>
+                        <span class="h-meta">${h.date} · ${h.memo || '-'}</span>
+                    </div>
+                    <div class="h-right">
+                        <span class="h-amount">¥${Number(h.amount).toLocaleString()}</span>
+                        ${h.id ? `<button class="del-btn" onclick="deleteEntry('${h.id}', this)">×</button>` : ''}
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
-        loadMasterData();
-        document.getElementById("refreshBtn").onclick = () => loadMasterData(true);
-    });
+    // ==========================================
+    // 削除処理
+    // ==========================================
+    window.deleteEntry = async (id, btnEl) => {
+        if(!confirm("この記録を削除しますか？")) return;
+        
+        // 楽観的UI: まず画面から消してしまう
+        const li = btnEl.closest("li");
+        li.style.opacity = "0.3"; // 薄くする
+        
+        try {
+            const fd = new FormData();
+            fd.set("action", "delete");
+            fd.set("rowId", id);
+            
+            // POST送信（JSONPではなくfetchを使用）
+            await fetch(GAS_URL, { method: "POST", body: fd });
+            
+            // 成功したら完全に消し、データ再取得して整合性をとる
+            li.remove();
+            fetchLatestData(); 
+        } catch(e) {
+            alert("削除に失敗しました: " + e.message);
+            li.style.opacity = "1"; // 戻す
+        }
+    };
 
     // ==========================================
-    // 2. 爆速送信 (Optimistic UI + Keepalive)
+    // 送信処理 (爆速モード)
     // ==========================================
     document.getElementById("f").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const btn = document.getElementById("submitBtn");
         const fd = new FormData(ev.target);
 
-        // --- ① UIを即座に成功状態にする（楽観的UI） ---
-        showToast();   // 「完了」表示
-        ev.target.reset(); // フォームをリセット
-        document.activeElement.blur(); // キーボードを閉じる
-        
-        // 連打防止のため一瞬だけ無効化（0.5秒で復活）
+        // 楽観的UI: 成功したことにして画面をリセット
+        showToast();
+        ev.target.reset();
+        document.activeElement.blur(); // キーボード閉じる
         btn.disabled = true;
         setTimeout(() => btn.disabled = false, 500);
 
-        // --- ② データ整形 ---
+        // データ整形
         let dateVal = fd.get("date");
         if (!dateVal) {
             const now = new Date();
@@ -296,26 +391,27 @@
             dateVal = `${y}-${m}-${d}`;
         }
         fd.set("date", dateVal);
-
         const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
         fd.set("amount", a);
 
-        // --- ③ 裏で送信 (Fire and Forget) ---
-        // keepalive: true により、ブラウザを閉じても送信が継続される
-        fetch(GAS_URL, { 
-            method: "POST", 
-            body: fd, 
-            keepalive: true 
-        }).then(res => res.json())
-          .then(js => {
-              if (!js.ok) {
-                  // 万が一失敗した場合は遅れてアラート（稀なケース）
-                  alert("【注意】送信に失敗した可能性があります。\n" + (js.error || ""));
-              }
-          })
-          .catch(e => {
-              alert("【通信エラー】送信できませんでした。\nネット環境を確認してください。");
+        // keepalive: true で裏送信
+        fetch(GAS_URL, { method: "POST", body: fd, keepalive: true })
+          .then(() => {
+              // 送信完了後、少し待ってから履歴を更新（スプシ反映待ち）
+              setTimeout(fetchLatestData, 2000);
           });
+    });
+
+    // 初期化
+    window.addEventListener("DOMContentLoaded", () => {
+        loadData();
+        // 更新ボタン
+        document.getElementById("refreshBtn").onclick = () => {
+            const icon = document.querySelector(".refresh-btn svg");
+            if(icon) icon.style.transform = "rotate(360deg)";
+            loadData(true);
+            setTimeout(() => { if(icon) icon.style.transform = ""; }, 500);
+        };
     });
 
     function showToast(){
@@ -324,6 +420,7 @@
         setTimeout(() => t.classList.remove("show"), 2500);
     }
 
+    // JSONP関数（GET用）
     function jsonp(url) {
         return new Promise((resolve, reject) => {
             const cb = "cb_" + Math.random().toString(36).slice(2);
