@@ -53,7 +53,7 @@
     .page{
       max-width: 760px; margin:0 auto; height: 100svh;
       padding: 12px; display:flex; flex-direction:column; gap: 10px;
-      position:relative; z-index:1; overflow-y: auto; /* スクロール許可 */
+      position:relative; z-index:1; overflow-y: auto;
     }
 
     .header-row {
@@ -86,13 +86,22 @@
     label{ font-size:14px; color:var(--muted); margin-bottom:4px; display:block;}
     
     input,select,textarea{
-      width:100%; border:1px solid rgba(229,231,235,.95);
+      width:100%; max-width: 100%; /* はみ出し防止 */
+      border:1px solid rgba(229,231,235,.95);
       border-radius: 18px; padding: 14px;
       background: rgba(255,255,255,.92);
       font-size:18px; outline:none;
       box-shadow: 0 4px 10px rgba(0,0,0,.03);
     }
     textarea{ height: 80px; resize:none;}
+
+    /* 日付欄の特別調整：はみ出し防止 */
+    input[type="date"] {
+        padding: 10px 14px; /* 上下パディングを少し減らす */
+        font-size: 16px; /* 文字サイズを少し落として収まりよくする */
+        min-width: 0;
+        -webkit-appearance: none; /* iOS固有のスタイルリセット */
+    }
 
     /* 送信ボタン（ローディング対応） */
     .btn{
@@ -122,7 +131,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .btn.loading .spinner { display: block; }
-    .btn.loading span { display: none; } /* テキストを隠す */
+    .btn.loading span { display: none; }
 
     .hint{ font-size: 12px; color:var(--muted); line-height:1.4; padding: 4px;}
 
@@ -214,7 +223,11 @@
     // ==========================================
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
     
-    // キャッシュのキー（ブラウザ保存用）
+    // 【重要】前回指定していたローカル画像のパスをここに復活させました
+    // もし変更したい場合はここを書き換えてください（空にすればGASの設定に従います）
+    const POM_OVERRIDE_URL = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png";
+
+    // キャッシュのキー
     const CACHE_KEY = "nawa_kakeibo_master_v1";
 
     // ==========================================
@@ -224,23 +237,24 @@
         const catSelect = document.getElementById("category");
         const metSelect = document.getElementById("method");
 
-        // キャッシュがあれば先に表示（爆速化）
         const cached = localStorage.getItem(CACHE_KEY);
         if (!forceReload && cached) {
             applyMasterData(JSON.parse(cached));
             console.log("Used Cache");
-            return; // キャッシュがあれば通信しない
+            return;
         }
 
-        // キャッシュがない、または強制更新の場合のみGASへ
         try {
-            catSelect.options[0].text = "読み込み中...";
+            // 強制更新時はプルダウンをリセット
+            if(forceReload) {
+                catSelect.innerHTML = "<option>読み込み中...</option>";
+                metSelect.innerHTML = "<option>読み込み中...</option>";
+            }
+
             const data = await jsonp(GAS_URL + "?action=master");
-            
-            // データを保存
             localStorage.setItem(CACHE_KEY, JSON.stringify(data));
             applyMasterData(data);
-            alert("最新データを読み込みました！");
+            if(forceReload) alert("最新データを読み込みました！");
         } catch(e) {
             alert("読み込みエラー: " + e.message);
         }
@@ -262,94 +276,75 @@
         setOpts(document.getElementById("category"), data.categories || []);
         setOpts(document.getElementById("method"), data.methods || []);
 
-        // 画像の設定
-        if (data.pomUrls && data.pomUrls.length) {
+        // 画像の設定（POM_OVERRIDE_URLを最優先）
+        const pomUrl = (POM_OVERRIDE_URL && POM_OVERRIDE_URL.trim()) ? POM_OVERRIDE_URL : (data.pomUrls && data.pomUrls[0]);
+        if (pomUrl) {
             document.body.classList.add("hasPom");
-            document.body.style.setProperty("--pomBg", `url("${data.pomUrls[0]}")`);
+            document.body.style.setProperty("--pomBg", `url("${pomUrl}")`);
         }
+        
+        // クロミちゃん画像のURLがあればセット（なければそのまま）
         if (data.kuromiUrls && data.kuromiUrls.length) {
             document.getElementById("kuromiImg").src = data.kuromiUrls[0];
         }
     }
 
     // ==========================================
-    // 2. 日付の日本時間強制 (JST Force)
-    // ==========================================
-    function getTodayJST() {
-        const d = new Date();
-        // UTCからのズレを補正してYYYY-MM-DDを作る
-        const offset = d.getTimezoneOffset() * 60000; 
-        const jstDate = new Date(d.getTime() - offset + (9 * 60 * 60 * 1000)); 
-        return jstDate.toISOString().split('T')[0];
-    }
-
-    // ==========================================
     // 初期化処理
     // ==========================================
     window.addEventListener("DOMContentLoaded", () => {
-        loadMasterData(); // まずキャッシュ確認
-        
-        // 更新ボタン
+        loadMasterData();
         document.getElementById("refreshBtn").onclick = () => loadMasterData(true);
     });
 
     // ==========================================
-    // 3. 送信処理 (Loading State)
+    // 3. 送信処理 (Loading & Date Fix)
     // ==========================================
     document.getElementById("f").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const btn = document.getElementById("submitBtn");
         const fd = new FormData(ev.target);
 
-        // UIを「送信中」に変更
+        // UI制御
         btn.disabled = true;
         btn.classList.add("loading");
 
-        // 日付補正：空なら「今日」をセットして送信データに含める
+        // 日付補正：空ならJSで「日本時間の今日」を生成してセット
         let dateVal = fd.get("date");
         if (!dateVal) {
-            // 入力がない場合、ブラウザの現在時刻（JST）を強制セット
             const now = new Date();
             const y = now.getFullYear();
             const m = ("0" + (now.getMonth()+1)).slice(-2);
             const d = ("0" + now.getDate()).slice(-2);
-            dateVal = `${y}-${m}-${d}`; // YYYY-MM-DD
+            dateVal = `${y}-${m}-${d}`;
         }
         fd.set("date", dateVal);
 
-        // 金額のカンマ除去など
         const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
         fd.set("amount", a);
 
         try {
-            // 送信（POST）
             const res = await fetch(GAS_URL, { method: "POST", body: fd });
             const js = await res.json();
             
             if (!js.ok) throw new Error(js.error || "不明なエラー");
 
-            // 成功時
             showToast();
             ev.target.reset();
-            // 日付欄はリセットされると空になるので、必要なら今日のままにする等の配慮も可
-
         } catch(e) {
             alert("送信失敗: " + e.message);
         } finally {
-            // UIを元に戻す
             btn.disabled = false;
             btn.classList.remove("loading");
         }
     });
 
-    // トースト表示
     function showToast(){
         const t = document.getElementById("toast");
         t.classList.add("show");
         setTimeout(() => t.classList.remove("show"), 3000);
     }
 
-    // JSONP関数（GET用）
     function jsonp(url) {
         return new Promise((resolve, reject) => {
             const cb = "cb_" + Math.random().toString(36).slice(2);
