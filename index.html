@@ -6,21 +6,24 @@
   <title>名和家の家計簿！</title>
   <style>
     :root{
-      /* かわいいカラーパレット */
-      --ink: #5d5d6a;
-      --muted: #a0a0b0;
-      --bg-start: #fff5f8; /* 淡いピンク */
-      --bg-end: #f0f4ff;   /* 淡いブルー */
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --accent-pink: #ffb7d5;
-      --accent-blue: #b7d5ff;
-      --btn-grad: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+      /* 鮮やかなキャンディカラー */
+      --ink: #4b2c3d;
+      --muted: #8e7a84;
+      --bg-pink: #ff9a9e;  /* 鮮やかなピンク */
+      --bg-purple: #a18cd1; /* 鮮やかなパープル */
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --accent-pink: #ff6491;
+      --accent-purple: #b085ff;
+      --border-thick: 3.5px;
+      --shadow-pop: 0 8px 0 rgba(255, 100, 145, 0.2);
     }
 
     html,body{
       margin:0; padding:0;
-      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
-      font-family: "Hiragino Sans", "Meiryo", sans-serif;
+      /* 鮮やかなピンクからパープルへのグラデーション */
+      background: linear-gradient(135deg, var(--bg-pink) 0%, var(--bg-purple) 100%);
+      background-attachment: fixed;
+      font-family: "Hiragino Maru Gothic ProN", "Meiryo", sans-serif;
       height: 100%; overflow: hidden; color: var(--ink);
     }
     *{ box-sizing: border-box; touch-action: manipulation; }
@@ -28,90 +31,96 @@
     .page { max-width: 500px; margin: 0 auto; padding: 16px; height: 100svh; overflow-y: auto; position: relative; z-index: 1; }
     
     /* ヘッダーエリア */
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; position: relative; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .title-group { flex: 1; }
-    .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #ff85b3; text-shadow: 1px 1px 2px #fff; }
-    .title-sub { font-size: 13px; color: var(--muted); margin: 2px 0 0 0; font-weight: bold; }
+    .title-main { font-size: 28px; font-weight: 900; margin: 0; color: #fff; text-shadow: 2px 2px 0px var(--accent-pink); }
+    .title-sub { font-size: 14px; color: #fff; margin: 4px 0 0 0; font-weight: 900; opacity: 0.9; }
     
-    /* ① 右上アイコンを透過表示 */
+    /* 右上アイコン：透過50% */
     .top-icon {
-      width: 60px; height: 60px; object-fit: cover;
-      border-radius: 50%; border: 3px solid #fff;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-      opacity: 0.5; /* 透過設定 */
-      transition: opacity 0.3s;
+      width: 65px; height: 65px; object-fit: cover;
+      border-radius: 50%; border: var(--border-thick) solid #fff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      opacity: 0.5;
     }
-    .top-icon:active { opacity: 1.0; }
 
-    /* 予算カード（ぷるぷるデザイン） */
+    /* 予算カード（可視性重視） */
     .budget-card {
-      background: var(--card-bg); border-radius: 24px; padding: 14px;
-      margin-bottom: 16px; backdrop-filter: blur(10px);
-      box-shadow: 0 8px 20px rgba(255, 183, 213, 0.2);
-      border: 2px solid #fff;
+      background: var(--card-bg); border-radius: 24px; padding: 16px;
+      margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border: var(--border-thick) solid #fff;
     }
-    .budget-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #ff85b3; }
-    .budget-bar-bg { height: 12px; background: #fff; border-radius: 6px; overflow: hidden; margin-top: 8px; border: 1px solid #ffeef5; }
-    .budget-bar-fill { height: 100%; background: linear-gradient(90deg, #ffb7d5, #ff85b3); width: 0%; transition: width 1s ease; }
+    .budget-info { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; color: var(--accent-pink); }
+    .budget-bar-bg { height: 16px; background: #fff; border-radius: 8px; overflow: hidden; margin-top: 10px; border: 2px solid #ffeef5; }
+    .budget-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple)); width: 0%; transition: width 1s ease; }
 
     /* メインフォーム */
     .card {
-      background: var(--card-bg); border-radius: 28px; padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-      backdrop-filter: blur(10px); border: 2px solid #fff;
+      background: var(--card-bg); border-radius: 30px; padding: 22px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+      border: var(--border-thick) solid #fff;
     }
-    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; font-weight: bold; padding-left: 8px; }
+    label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; font-weight: 900; padding-left: 10px; }
     
-    .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
-    .currency { position: absolute; left: 18px; font-weight: 900; font-size: 24px; color: #ff85b3; }
+    /* 金額UI（デカくて見やすい） */
+    .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 18px; }
+    .currency { position: absolute; left: 18px; font-weight: 900; font-size: 26px; color: var(--accent-pink); }
     input[name="amount"] {
-      padding-left: 45px !important; font-size: 28px !important; font-weight: 900;
-      color: #ff85b3; border: 3px solid #fff !important; background: rgba(255,255,255,0.5) !important;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+      padding-left: 50px !important; font-size: 32px !important; font-weight: 900;
+      color: var(--accent-pink); border: var(--border-thick) solid var(--accent-pink) !important;
+      background: #fff !important; border-radius: 20px;
     }
 
     input, select {
-      width: 100%; border: 2px solid #fff; border-radius: 18px;
-      padding: 0 15px; height: 50px; font-size: 16px; outline: none;
-      margin-bottom: 16px; background: rgba(255,255,255,0.6);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      width: 100%; border: var(--border-thick) solid #eee; border-radius: 18px;
+      padding: 0 16px; height: 52px; font-size: 17px; font-weight: bold; outline: none;
+      margin-bottom: 18px; background: #fff; color: var(--ink);
+      transition: border-color 0.2s;
     }
+    input:focus, select:focus { border-color: var(--accent-purple); }
 
-    /* 日付と送信ボタンの横並びレイアウト */
-    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 4px; }
+    /* 日付とボタンの横並び */
+    .row-flex { display: flex; gap: 14px; align-items: flex-end; margin-top: 6px; }
     .date-box { flex: 1; }
-    .date-box input { margin-bottom: 0; }
+    .date-box input { margin-bottom: 0; border-color: #eee; }
 
-    /* スタンプボタンのデザイン */
+    /* stamp.png を使った送信ボタン */
     .stamp-btn {
-      width: 75px; height: 75px; border-radius: 20px;
-      border: 3px solid #fff; background: var(--btn-grad);
-      box-shadow: 0 6px 15px rgba(255, 133, 179, 0.4);
+      width: 85px; height: 85px; border-radius: 22px;
+      border: var(--border-thick) solid #fff; 
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      box-shadow: 0 8px 15px rgba(255, 100, 145, 0.4);
       cursor: pointer; position: relative;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      padding: 4px; overflow: hidden;
+      transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      padding: 6px;
     }
-    .stamp-btn img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 2px; }
-    .stamp-btn span { font-size: 10px; font-weight: 900; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1); }
-    .stamp-btn:active { transform: scale(0.9) rotate(-5deg); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .stamp-btn:disabled { filter: grayscale(1); opacity: 0.6; }
+    /* stamp.png 差し替え箇所 */
+    .stamp-btn img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 2px; }
+    .stamp-btn span { font-size: 11px; font-weight: 900; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+    
+    .stamp-btn:active {
+      transform: scale(0.85) rotate(-3deg);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-    /* 履歴リスト */
+    /* 履歴リスト（くっきり） */
     .history-item {
-      background: rgba(255,255,255,0.6); border-radius: 20px;
-      padding: 12px 18px; display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 10px; border: 1px solid #fff;
+      background: rgba(255, 255, 255, 0.85); border-radius: 22px;
+      padding: 14px 20px; display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 12px; border: var(--border-thick) solid #fff;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.03);
     }
-    .h-memo { font-weight: bold; font-size: 15px; color: var(--ink); }
-    .h-sub { font-size: 11px; color: var(--muted); }
-    .del-btn { color: #ffb7d5; border: none; background: #fff; border-radius: 12px; width: 36px; height: 36px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .h-memo { font-weight: 900; font-size: 16px; color: var(--ink); }
+    .h-sub { font-size: 12px; color: var(--muted); font-weight: bold; }
+    .del-btn { color: #fff; border: none; background: var(--accent-pink); border-radius: 14px; width: 38px; height: 38px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #d64571; }
+    .del-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d64571; }
 
     /* トースト */
     .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
-    .toast { background: #fff; border-radius: 30px; box-shadow: 0 20px 60px rgba(255, 133, 179, 0.3); padding: 25px; display: flex; gap: 20px; align-items: center; opacity: 0; transform: translateY(30px) scale(0.9); transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 3px solid #ffb7d5; }
-    .toast.show { opacity: 1; transform: translateY(0) scale(1); }
-    .toast img { width: 80px; height: 80px; object-fit: contain; }
+    .toast { background: #fff; border-radius: 35px; box-shadow: 0 25px 70px rgba(0,0,0,0.3); padding: 25px; display: flex; gap: 20px; align-items: center; opacity: 0; transform: translateY(40px); transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 5px solid var(--accent-purple); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast img { width: 85px; height: 85px; object-fit: contain; }
   </style>
 </head>
 <body>
@@ -121,7 +130,7 @@
         <h1 class="title-main">名和家の家計簿！</h1>
         <p class="title-sub">今日も1日、お疲れ様です！</p>
       </div>
-      <img src="icon-1024.png.png" class="top-icon" id="topIcon">
+      <img src="icon-1024.png.png" class="top-icon">
     </div>
 
     <div class="budget-card">
@@ -141,13 +150,13 @@
         </div>
 
         <label>カテゴリ & 支払方法</label>
-        <div style="display:flex; gap:10px; margin-bottom:14px;">
-          <select id="category" name="category" required style="margin-bottom:0; flex:1.2;"></select>
-          <select id="method" name="method" required style="margin-bottom:0; flex:1;"></select>
+        <div style="display:flex; gap:12px; margin-bottom:18px;">
+          <select id="category" name="category" required style="margin-bottom:0; flex:1.3; border-color:#eee;"></select>
+          <select id="method" name="method" required style="margin-bottom:0; flex:1; border-color:#eee;"></select>
         </div>
 
         <label>店名・メモ</label>
-        <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
+        <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし" style="border-color:#eee;">
 
         <div class="row-flex">
           <div class="date-box">
@@ -156,15 +165,15 @@
           </div>
           
           <button class="stamp-btn" type="submit" id="subBtn">
-            <img src="kuromi.png" id="btnImg" onerror="this.src='https://img.icons8.com/bubbles/100/000000/check-mark.png'">
+            <img src="stamp.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/todo-list.png'">
             <span>記録！</span>
           </button>
         </div>
       </form>
     </div>
 
-    <div style="margin-top:24px; padding-bottom: 40px;">
-      <div style="font-size:14px; font-weight:bold; color:var(--muted); margin-bottom:12px; padding-left:10px;">最近の記録</div>
+    <div style="margin-top:28px; padding-bottom: 40px;">
+      <div style="font-size:15px; font-weight:900; color:#fff; margin-bottom:14px; padding-left:12px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">最近の記録</div>
       <div id="hList"></div>
     </div>
   </div>
@@ -173,8 +182,8 @@
     <div class="toast" id="tst">
       <img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'">
       <div>
-        <div style="font-weight:900; font-size:22px; color:#ff85b3;">登録完了！</div>
-        <div style="font-size:13px; color:#a0a0b0;">家計簿を更新したよ♪</div>
+        <div style="font-weight:900; font-size:24px; color:var(--accent-purple);">登録完了！</div>
+        <div style="font-size:14px; color:var(--muted); font-weight:bold;">家計簿を更新したよ♪</div>
       </div>
     </div>
   </div>
@@ -197,8 +206,8 @@
             <div class="h-memo">${h.memo || h.category}</div>
             <div class="h-sub">${h.date} · ${h.category}</div>
           </div>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <span style="font-weight:900; font-size:17px; color:#ff85b3;">¥${h.amount.toLocaleString()}</span>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="font-weight:900; font-size:19px; color:var(--accent-pink);">¥${h.amount.toLocaleString()}</span>
             <button class="del-btn" onclick="del('${h.id}')">×</button>
           </div>
         </div>`).join('');
