@@ -7,69 +7,94 @@
 
   <style>
     :root{
-      --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f7fb;
+      --ink:#111827; --muted:#6b7280; --bg:#f7f7fb;
       --btnColor: linear-gradient(135deg, rgba(236,72,153,.92), rgba(167,139,250,.92));
     }
 
     html,body{ margin:0; padding:0; background: var(--bg); font-family: sans-serif; height: 100%; overflow: hidden; }
     *{ box-sizing: border-box; touch-action: manipulation; }
 
-    /* 背景と画像の修正 */
+    /* 背景とポムの透かし */
     body::before {
       content:""; position:fixed; inset:0; z-index:0;
-      background: radial-gradient(circle at 15% 10%, rgba(236,72,153,0.1), transparent);
+      background: radial-gradient(circle at 15% 10%, rgba(236,72,153,0.08), transparent);
     }
-
-    /* ポム画像：背景として透過表示 */
     #bg-image {
       position: fixed; inset: 0; pointer-events: none; z-index: -1;
-      opacity: 0.15; background-repeat: no-repeat; background-position: center 20%;
-      background-size: min(300px, 70vw);
+      opacity: 0.12; background-repeat: no-repeat; background-position: center 25%;
+      background-size: min(320px, 75vw);
     }
 
-    .page { max-width: 600px; margin: 0 auto; padding: 16px; height: 100svh; overflow-y: auto; position: relative; z-index: 1; }
+    .page { max-width: 600px; margin: 0 auto; padding: 12px; height: 100svh; overflow-y: auto; position: relative; z-index: 1; }
     
+    /* ① タイトル復活 */
+    .title-area { margin-bottom: 12px; }
+    .title-main { font-size: 24px; font-weight: 900; color: var(--ink); margin: 0; }
+    .title-sub { font-size: 12px; color: var(--muted); margin: 0; }
+
     .budget-card {
-      background: rgba(255,255,255,0.8); border-radius: 16px; padding: 12px;
-      margin-bottom: 16px; backdrop-filter: blur(5px);
+      background: rgba(255,255,255,0.85); border-radius: 16px; padding: 12px;
+      margin-bottom: 12px; backdrop-filter: blur(5px); box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     }
     .budget-bar-bg { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    .budget-bar-fill { height: 100%; background: #34d399; transition: width 0.5s; }
+    .budget-bar-fill { height: 100%; background: #34d399; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-    .card { background: rgba(255,255,255,0.9); border-radius: 20px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .card { background: rgba(255,255,255,0.92); border-radius: 20px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     
-    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: bold; }
     
-    /* 金額入力のUI修正 */
-    .amount-input-wrapper { position: relative; display: flex; align-items: center; }
-    .currency-symbol { position: absolute; left: 12px; font-weight: bold; font-size: 20px; color: #ec4893; }
-    input[name="amount"] { padding-left: 35px !important; font-size: 24px !important; font-weight: 900; color: #ec4893; }
+    /* ④ 金額UIの改善 */
+    .amount-input-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 12px; }
+    .currency-symbol { position: absolute; left: 14px; font-weight: 900; font-size: 22px; color: #ec4893; }
+    input[name="amount"] { 
+        padding-left: 38px !important; font-size: 26px !important; font-weight: 900; color: #ec4893; 
+        border: 2px solid #fce7f3;
+    }
 
     input, select, textarea {
-      width: 100%; border: 1px solid #ddd; border-radius: 12px; padding: 12px;
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px;
       font-size: 16px; outline: none; margin-bottom: 12px; background: #fff;
+    }
+    
+    /* ⑤ 日付欄のはみ出し修正 */
+    input[type="date"] {
+        padding: 10px 12px;
+        min-height: 48px;
+        max-width: 100%;
+        font-family: inherit;
     }
 
     .btn {
       width: 100%; border: none; border-radius: 14px; padding: 16px;
-      background: var(--btnColor); color: #fff; font-weight: bold; font-size: 18px;
+      background: var(--btnColor); color: #fff; font-weight: 900; font-size: 18px;
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3); margin-top: 4px;
     }
+    .btn:active { transform: scale(0.98); opacity: 0.9; }
 
     /* 履歴 */
     .history-item {
-      background: rgba(255,255,255,0.7); border-radius: 12px; padding: 10px;
+      background: rgba(255,255,255,0.7); border-radius: 12px; padding: 10px 14px;
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+      border: 1px solid rgba(0,0,0,0.02);
     }
-    .del-btn { color: #ef4444; border: none; background: none; font-size: 20px; cursor: pointer; }
+    .h-info { display: flex; flex-direction: column; }
+    .h-memo { font-weight: 900; font-size: 15px; }
+    .h-sub { font-size: 11px; color: #999; }
+    .del-btn { color: #f87171; border: none; background: #fee2e2; border-radius: 8px; width: 30px; height: 30px; font-weight: bold; }
   </style>
 </head>
 
 <body>
   <div id="bg-image"></div>
   <div class="page">
+    <div class="title-area">
+      <h1 class="title-main">名和家の家計簿！</h1>
+      <p class="title-sub">家計管理、お疲れ様です！</p>
+    </div>
+
     <div class="budget-card" id="budgetCard">
       <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold;">
-        <span>今月の実績</span>
+        <span>今月の変動費実績</span>
         <span><span id="currentTotal">0</span> / <span id="budgetLimit">0</span></span>
       </div>
       <div class="budget-bar-bg"><div class="budget-bar-fill" id="budgetBar"></div></div>
@@ -89,8 +114,8 @@
         <label>支払方法</label>
         <select id="method" name="method" required></select>
 
-        <label>メモ（店名など）</label>
-        <input name="memo" placeholder="例：コープ">
+        <label>店名・メモ（任意）</label>
+        <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
 
         <label>日付（空欄なら今日）</label>
         <input name="date" type="date">
@@ -99,8 +124,8 @@
       </form>
     </div>
 
-    <div style="margin-top:20px;">
-      <div style="font-size:14px; font-weight:bold; color:var(--muted); margin-bottom:10px;">直近5件の履歴</div>
+    <div style="margin-top:20px; padding-bottom: 40px;">
+      <div style="font-size:13px; font-weight:bold; color:var(--muted); margin-bottom:8px;">最近の記録</div>
       <div id="historyList"></div>
     </div>
   </div>
@@ -110,17 +135,15 @@
     const POM_IMG_PATH = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png";
 
     async function loadData() {
-        // 画像を即座にセット
         document.getElementById('bg-image').style.backgroundImage = `url('${POM_IMG_PATH}')`;
 
         const data = await jsonp(GAS_URL + "?action=master");
         
-        // 予算反映
-        document.getElementById("currentTotal").textContent = "¥" + Number(data.budget.total).toLocaleString();
-        document.getElementById("budgetLimit").textContent = "¥" + Number(data.budget.limit).toLocaleString();
+        // ② 整数表示
+        document.getElementById("currentTotal").textContent = "¥" + Math.floor(data.budget.total).toLocaleString();
+        document.getElementById("budgetLimit").textContent = "¥" + Math.floor(data.budget.limit).toLocaleString();
         document.getElementById("budgetBar").style.width = data.budget.percent + "%";
 
-        // プルダウン
         const fill = (id, list) => {
           const el = document.getElementById(id);
           el.innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join('');
@@ -128,22 +151,20 @@
         fill("category", data.categories);
         fill("method", data.methods);
 
-        // 履歴反映
         document.getElementById("historyList").innerHTML = data.history.map(h => `
           <div class="history-item">
-            <div>
-              <div style="font-weight:bold;">${h.memo || h.category}</div>
-              <div style="font-size:11px; color:#999;">${h.date} · ${h.category}</div>
+            <div class="h-info">
+              <span class="h-memo">${h.memo || '-'}</span>
+              <span class="h-sub">${h.date} · ${h.category}</span>
             </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-weight:bold;">¥${Number(h.amount).toLocaleString()}</span>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-weight:900; font-size:16px;">¥${Math.floor(h.amount).toLocaleString()}</span>
               <button class="del-btn" onclick="deleteItem('${h.id}')">×</button>
             </div>
           </div>
         `).join('');
     }
 
-    // 削除処理
     window.deleteItem = async (id) => {
       if(!confirm("削除しますか？")) return;
       const fd = new FormData(); fd.set("action", "delete"); fd.set("rowId", id);
@@ -156,8 +177,6 @@
       const btn = document.getElementById("submitBtn");
       btn.disabled = true;
       const fd = new FormData(ev.target);
-      
-      // 金額のクレンジング
       const amt = fd.get("amount").replace(/[^0-9]/g, "");
       fd.set("amount", amt);
 
