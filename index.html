@@ -9,7 +9,7 @@
       --ink: #444; --muted: #888;
       --bg-pink: #fff0f5; --bg-purple: #f3f0ff; --accent-pink: #ff7eb3;
       --card-bg: rgba(255, 255, 255, 0.85); --border-thick: 2.5px;
-      --stamp-size: 84px; /* ボタンサイズを大きく */
+      --stamp-size: 86px;
     }
     html,body{
       margin:0; padding:0; background: linear-gradient(135deg, var(--bg-pink) 0%, var(--bg-purple) 100%);
@@ -19,11 +19,10 @@
     *{ box-sizing: border-box; touch-action: manipulation; }
     .page { max-width: 500px; margin: 0 auto; padding: 10px; height: 100svh; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; }
     
-    /* 右上透過画像：サイズ微調整 */
     .header { position: relative; margin-bottom: 8px; min-height: 105px; padding: 10px 5px 0; }
     .title-group { position: relative; z-index: 2; padding-right: 100px; } 
     .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #555; }
-    .title-sub { font-size: 11.5px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
+    .title-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
     .top-icon { position: absolute; right: 5px; top: 0px; width: 110px; height: 110px; object-fit: contain; opacity: 0.35; z-index: 0; pointer-events: none; }
 
     .budget-card {
@@ -43,7 +42,6 @@
 
     input, select { width: 100%; border: 1.5px solid #eee; border-radius: 14px; padding: 0 12px; height: 46px; font-size: 15px; outline: none; margin-bottom: 12px; background: #fff; }
 
-    /* レイアウト調整：日付を適正な長さに */
     .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 5px; }
     .date-box { flex: 0.52; min-width: 0; } 
     .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
@@ -62,7 +60,7 @@
     .history-item { background: rgba(255, 255, 255, 0.7); border-radius: 18px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1.5px solid #fff; }
     .h-memo { font-weight: bold; font-size: 14px; }
     .h-sub { font-size: 10px; color: var(--muted); }
-    .del-btn { color: #fff; border: none; background: #ffb5d2; border-radius: 10px; width: 32px; height: 32px; font-weight: bold; }
+    .del-btn { color: #fff; border: none; background: #ffb5d2; border-radius: 10px; width: 32px; height: 32px; font-weight: bold; cursor: pointer; }
 
     .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
     .toast { background: #fff; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; display: flex; gap: 15px; align-items: center; opacity: 0; transform: translateY(20px); transition: .4s; border: 3px solid #ffdeeb; }
@@ -82,7 +80,7 @@
 
     <div class="budget-card">
       <div class="budget-info">
-        <span>今月の実績/予算</span>
+        <span>実績 / 予算</span>
         <span>¥<span id="cur">0</span> / <span id="lim">0</span></span>
       </div>
       <div class="budget-bar-bg"><div class="budget-bar-fill" id="bar"></div></div>
@@ -140,7 +138,22 @@
           <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${h.amount.toLocaleString()}</span><button class="del-btn" onclick="del('${h.id}')">×</button></div>
         </div>`).join('');
     }
-    window.del = async (id) => { if(!confirm("この記録を消してもいい？")) return; await fetch(GAS_URL + "&action=delete&rowId=" + id, { method: "POST" }); load(); };
+
+    // 削除機能の修正：FormDataを使用してPOST送信
+    window.del = async (id) => { 
+      if(!confirm("この記録を消してもいい？")) return; 
+      const fd = new FormData();
+      fd.append("action", "delete");
+      fd.append("rowId", id);
+      
+      try {
+        await fetch(GAS_URL, { method: "POST", body: fd }); 
+        load(); 
+      } catch (e) {
+        alert("削除に失敗しました。");
+      }
+    };
+
     document.getElementById("f").addEventListener("submit", async (e) => {
       e.preventDefault(); const b = document.getElementById("subBtn"); b.disabled = true;
       const fd = new FormData(e.target); fd.set("amount", fd.get("amount").replace(/[^0-9]/g, ""));
@@ -149,6 +162,7 @@
       setTimeout(() => { tst.classList.remove("show"); }, 2500);
       e.target.reset(); load(); b.disabled = false;
     });
+
     function jsonp(u) { return new Promise(r => { const c = "cb" + Date.now(); window[c] = d => { r(d); delete window[c]; s.remove(); }; const s = document.createElement("script"); s.src = `${u}&callback=${c}`; document.head.appendChild(s); }); }
     load();
   </script>
