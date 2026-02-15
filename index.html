@@ -5,80 +5,128 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <title>名和家の家計簿！</title>
   <style>
-    :root{ --ink:#111827; --muted:#6b7280; --bg:#f7f7fb; --pink:#ec4893; --btnColor:linear-gradient(135deg, rgba(236,72,153,.92), rgba(167,139,250,.92)); }
-    html,body{ margin:0; padding:0; background: var(--bg); font-family: -apple-system, sans-serif; height: 100%; overflow: hidden; }
+    :root{
+      /* かわいいカラーパレット */
+      --ink: #5d5d6a;
+      --muted: #a0a0b0;
+      --bg-start: #fff5f8; /* 淡いピンク */
+      --bg-end: #f0f4ff;   /* 淡いブルー */
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --accent-pink: #ffb7d5;
+      --accent-blue: #b7d5ff;
+      --btn-grad: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+    }
+
+    html,body{
+      margin:0; padding:0;
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      font-family: "Hiragino Sans", "Meiryo", sans-serif;
+      height: 100%; overflow: hidden; color: var(--ink);
+    }
     *{ box-sizing: border-box; touch-action: manipulation; }
 
-    .page { max-width: 500px; margin: 0 auto; padding: 12px; height: 100svh; overflow-y: auto; position: relative; }
+    .page { max-width: 500px; margin: 0 auto; padding: 16px; height: 100svh; overflow-y: auto; position: relative; z-index: 1; }
     
-    /* ヘッダーエリア：テキストと画像を分離して配置 */
-    .header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: flex-start; 
-      padding: 10px 4px; 
-      background: transparent;
-      min-height: 80px;
-    }
+    /* ヘッダーエリア */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; position: relative; }
     .title-group { flex: 1; }
-    .title-main { font-size: 26px; font-weight: 900; margin: 0; color: var(--ink); display: block; }
-    .title-sub { font-size: 14px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; display: block; }
+    .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #ff85b3; text-shadow: 1px 1px 2px #fff; }
+    .title-sub { font-size: 13px; color: var(--muted); margin: 2px 0 0 0; font-weight: bold; }
     
-    /* 右上のアイコン画像 */
-    .top-icon { 
-      width: 70px; 
-      height: 70px; 
-      object-fit: cover; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-      background-color: #fff;
+    /* ① 右上アイコンを透過表示 */
+    .top-icon {
+      width: 60px; height: 60px; object-fit: cover;
+      border-radius: 50%; border: 3px solid #fff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      opacity: 0.5; /* 透過設定 */
+      transition: opacity 0.3s;
+    }
+    .top-icon:active { opacity: 1.0; }
+
+    /* 予算カード（ぷるぷるデザイン） */
+    .budget-card {
+      background: var(--card-bg); border-radius: 24px; padding: 14px;
+      margin-bottom: 16px; backdrop-filter: blur(10px);
+      box-shadow: 0 8px 20px rgba(255, 183, 213, 0.2);
+      border: 2px solid #fff;
+    }
+    .budget-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #ff85b3; }
+    .budget-bar-bg { height: 12px; background: #fff; border-radius: 6px; overflow: hidden; margin-top: 8px; border: 1px solid #ffeef5; }
+    .budget-bar-fill { height: 100%; background: linear-gradient(90deg, #ffb7d5, #ff85b3); width: 0%; transition: width 1s ease; }
+
+    /* メインフォーム */
+    .card {
+      background: var(--card-bg); border-radius: 28px; padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+      backdrop-filter: blur(10px); border: 2px solid #fff;
+    }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; font-weight: bold; padding-left: 8px; }
+    
+    .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
+    .currency { position: absolute; left: 18px; font-weight: 900; font-size: 24px; color: #ff85b3; }
+    input[name="amount"] {
+      padding-left: 45px !important; font-size: 28px !important; font-weight: 900;
+      color: #ff85b3; border: 3px solid #fff !important; background: rgba(255,255,255,0.5) !important;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
     }
 
-    .budget-card { background: #fff; border-radius: 18px; padding: 14px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-    .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
-    .budget-bar-bg { height: 10px; background: #f0f0f0; border-radius: 5px; overflow: hidden; }
-    .budget-bar-fill { height: 100%; background: #34d399; width: 0%; transition: width 1s ease; }
-
-    .card { background: #fff; border-radius: 22px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; font-weight: bold; }
-    
-    .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 14px; }
-    .currency { position: absolute; left: 16px; font-weight: 900; font-size: 24px; color: var(--pink); }
-    input[name="amount"] { padding-left: 42px !important; font-size: 28px !important; font-weight: 900; color: var(--pink); }
-
-    /* 全フィールドの高さ・デザインを統一 */
-    input, select { 
-      width: 100%; border: 1px solid #e5e7eb; border-radius: 14px; 
-      padding: 0 12px; height: 48px; font-size: 16px; outline: none; 
-      margin-bottom: 14px; background: #fff; 
+    input, select {
+      width: 100%; border: 2px solid #fff; border-radius: 18px;
+      padding: 0 15px; height: 50px; font-size: 16px; outline: none;
+      margin-bottom: 16px; background: rgba(255,255,255,0.6);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
     }
-    input[type="date"] { appearance: none; -webkit-appearance: none; display: flex; align-items: center; }
 
-    .btn { width: 100%; border: none; border-radius: 16px; padding: 16px; height: 58px; background: var(--btnColor); color: #fff; font-weight: 900; font-size: 18px; cursor: pointer; }
+    /* 日付と送信ボタンの横並びレイアウト */
+    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 4px; }
+    .date-box { flex: 1; }
+    .date-box input { margin-bottom: 0; }
 
-    .history-item { background: #fff; border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border: 1px solid #f0f0f0; }
-    .del-btn { color: #f87171; border: none; background: #fee2e2; border-radius: 10px; width: 34px; height: 34px; font-weight: bold; cursor: pointer; }
+    /* スタンプボタンのデザイン */
+    .stamp-btn {
+      width: 75px; height: 75px; border-radius: 20px;
+      border: 3px solid #fff; background: var(--btn-grad);
+      box-shadow: 0 6px 15px rgba(255, 133, 179, 0.4);
+      cursor: pointer; position: relative;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      padding: 4px; overflow: hidden;
+    }
+    .stamp-btn img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 2px; }
+    .stamp-btn span { font-size: 10px; font-weight: 900; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1); }
+    .stamp-btn:active { transform: scale(0.9) rotate(-5deg); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .stamp-btn:disabled { filter: grayscale(1); opacity: 0.6; }
 
-    /* トースト通知 */
+    /* 履歴リスト */
+    .history-item {
+      background: rgba(255,255,255,0.6); border-radius: 20px;
+      padding: 12px 18px; display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 10px; border: 1px solid #fff;
+    }
+    .h-memo { font-weight: bold; font-size: 15px; color: var(--ink); }
+    .h-sub { font-size: 11px; color: var(--muted); }
+    .del-btn { color: #ffb7d5; border: none; background: #fff; border-radius: 12px; width: 36px; height: 36px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+    /* トースト */
     .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
-    .toast { background: #fff; border-radius: 26px; box-shadow: 0 25px 60px rgba(0,0,0,0.2); padding: 24px; display: flex; gap: 18px; align-items: center; opacity: 0; transform: translateY(25px); transition: .35s; }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast img { width: 70px; height: 70px; object-fit: contain; }
+    .toast { background: #fff; border-radius: 30px; box-shadow: 0 20px 60px rgba(255, 133, 179, 0.3); padding: 25px; display: flex; gap: 20px; align-items: center; opacity: 0; transform: translateY(30px) scale(0.9); transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 3px solid #ffb7d5; }
+    .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+    .toast img { width: 80px; height: 80px; object-fit: contain; }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="header">
       <div class="title-group">
-        <span class="title-main">名和家の家計簿！</span>
-        <span class="title-sub">今日も1日、お疲れ様です！</span>
+        <h1 class="title-main">名和家の家計簿！</h1>
+        <p class="title-sub">今日も1日、お疲れ様です！</p>
       </div>
-      <img src="icon-1024.png.png" class="top-icon">
+      <img src="icon-1024.png.png" class="top-icon" id="topIcon">
     </div>
 
     <div class="budget-card">
       <div class="budget-info">
-        <span>実績 / 予算(当月換算)</span>
+        <span>今月の実績 / 予算</span>
         <span>¥<span id="cur">0</span> / ¥<span id="lim">0</span></span>
       </div>
       <div class="budget-bar-bg"><div class="budget-bar-fill" id="bar"></div></div>
@@ -87,27 +135,46 @@
     <div class="card">
       <form id="f">
         <label>金額</label>
-        <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
-        <label>カテゴリ</label><select id="category" name="category" required></select>
-        <label>支払方法</label><select id="method" name="method" required></select>
-        <label>店名・メモ</label><input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
-        <label>日付</label><input name="date" type="date">
-        <button class="btn" type="submit" id="subBtn">記録する</button>
+        <div class="amount-wrapper">
+          <span class="currency">¥</span>
+          <input name="amount" type="tel" inputmode="numeric" placeholder="0" required>
+        </div>
+
+        <label>カテゴリ & 支払方法</label>
+        <div style="display:flex; gap:10px; margin-bottom:14px;">
+          <select id="category" name="category" required style="margin-bottom:0; flex:1.2;"></select>
+          <select id="method" name="method" required style="margin-bottom:0; flex:1;"></select>
+        </div>
+
+        <label>店名・メモ</label>
+        <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
+
+        <div class="row-flex">
+          <div class="date-box">
+            <label>日付</label>
+            <input name="date" type="date">
+          </div>
+          
+          <button class="stamp-btn" type="submit" id="subBtn">
+            <img src="kuromi.png" id="btnImg" onerror="this.src='https://img.icons8.com/bubbles/100/000000/check-mark.png'">
+            <span>記録！</span>
+          </button>
+        </div>
       </form>
     </div>
 
     <div style="margin-top:24px; padding-bottom: 40px;">
-      <div style="font-size:14px; font-weight:bold; color:var(--muted); margin-bottom:10px;">最近の記録</div>
+      <div style="font-size:14px; font-weight:bold; color:var(--muted); margin-bottom:12px; padding-left:10px;">最近の記録</div>
       <div id="hList"></div>
     </div>
   </div>
 
   <div class="toastWrap">
     <div class="toast" id="tst">
-      <img src="kuromi.png">
+      <img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'">
       <div>
-        <div style="font-weight:900; font-size:20px;">登録完了！</div>
-        <div style="font-size:12px; color:#666;">データを更新しました</div>
+        <div style="font-weight:900; font-size:22px; color:#ff85b3;">登録完了！</div>
+        <div style="font-size:13px; color:#a0a0b0;">家計簿を更新したよ♪</div>
       </div>
     </div>
   </div>
@@ -127,22 +194,17 @@
       document.getElementById("hList").innerHTML = d.history.map(h => `
         <div class="history-item">
           <div>
-            <div style="font-weight:bold; font-size:15px;">${h.memo || h.category}</div>
-            <div style="font-size:11px; color:#999;">${h.date} · ${h.category}</div>
+            <div class="h-memo">${h.memo || h.category}</div>
+            <div class="h-sub">${h.date} · ${h.category}</div>
           </div>
           <div style="display:flex; align-items:center; gap:12px;">
-            <span style="font-weight:900; font-size:16px;">¥${h.amount.toLocaleString()}</span>
+            <span style="font-weight:900; font-size:17px; color:#ff85b3;">¥${h.amount.toLocaleString()}</span>
             <button class="del-btn" onclick="del('${h.id}')">×</button>
           </div>
         </div>`).join('');
     }
 
-    // 削除機能：G列のIDを使用して削除
-    window.del = async (id) => { 
-      if(!confirm("削除しますか？")) return; 
-      await fetch(GAS_URL + "&action=delete&rowId=" + id, { method: "POST" }); 
-      load(); 
-    };
+    window.del = async (id) => { if(!confirm("この記録を消してもいい？")) return; await fetch(GAS_URL + "&action=delete&rowId=" + id, { method: "POST" }); load(); };
 
     document.getElementById("f").addEventListener("submit", async (e) => {
       e.preventDefault(); 
