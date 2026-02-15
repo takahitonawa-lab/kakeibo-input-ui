@@ -14,6 +14,7 @@
       --accent-pink: #ff7eb3;
       --card-bg: rgba(255, 255, 255, 0.85);
       --border-thick: 2.5px;
+      --stamp-size: 84px; /* ボタンサイズを10%アップ */
     }
 
     html,body{
@@ -25,23 +26,27 @@
     }
     *{ box-sizing: border-box; touch-action: manipulation; }
 
-    .page { max-width: 500px; margin: 0 auto; padding: 12px; height: 100svh; overflow-y: auto; position: relative; z-index: 1; }
+    /* 画面全体のはみ出し防止 */
+    .page { 
+      max-width: 500px; margin: 0 auto; padding: 12px; height: 100svh; 
+      overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; 
+    }
     
-    /* ヘッダー：右上デカ画像 */
+    /* ヘッダー：右上デカ画像（10%縮小 & 位置微調整） */
     .header { position: relative; margin-bottom: 8px; min-height: 100px; padding-top: 10px; }
-    .title-group { position: relative; z-index: 2; }
+    .title-group { position: relative; z-index: 2; padding-right: 80px; } /* 画像との重なりを考慮 */
     .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #555; }
-    .title-sub { font-size: 13px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
+    .title-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; } /* 1px小さく */
     
     .top-icon {
-      position: absolute; right: -25px; top: -15px;
-      width: 140px; height: 140px; object-fit: contain;
-      opacity: 0.3; /* さらに透過を上げました */
+      position: absolute; right: -10px; top: -10px; /* 少し内側へ */
+      width: 125px; height: 125px; object-fit: contain; /* 10%縮小 */
+      opacity: 0.3;
       z-index: 0;
       pointer-events: none;
     }
 
-    /* 予算カード（さらにシンプルに） */
+    /* 予算カード */
     .budget-card {
       position: relative; z-index: 2;
       background: #fff; border-radius: 20px; padding: 16px;
@@ -75,14 +80,14 @@
       margin-bottom: 12px; background: #fff;
     }
 
-    /* 日付欄を極限まで短く、ボタン周りをスッキリ */
-    .row-flex { display: flex; gap: 20px; align-items: flex-end; margin-top: 5px; }
-    .date-box { flex: 0.4; min-width: 0; } /* さらに幅を抑えました */
+    /* レイアウト調整：日付を少し長く、ボタンを大きく */
+    .row-flex { display: flex; gap: 15px; align-items: flex-end; margin-top: 5px; }
+    .date-box { flex: 0.45; min-width: 0; } /* 0.4から0.45へ微増 */
     .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
 
-    .btn-group { flex: 0.6; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .btn-group { flex: 0.55; display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .stamp-btn {
-      width: 76px; height: 76px; border-radius: 20px;
+      width: var(--stamp-size); height: var(--stamp-size); border-radius: 22px;
       border: 3px solid #fff; 
       background: linear-gradient(135deg, #ffbdc0, #fecfef);
       box-shadow: 0 5px 0px rgba(255, 126, 179, 0.2);
@@ -90,8 +95,8 @@
       display: flex; align-items: center; justify-content: center;
       transition: all 0.1s; padding: 0; overflow: hidden;
     }
-    .stamp-btn img { width: 85%; height: 85%; object-fit: contain; }
-    .btn-label { font-size: 11px; font-weight: 900; color: var(--accent-pink); letter-spacing: 1px; }
+    .stamp-btn img { width: 88%; height: 88%; object-fit: contain; }
+    .btn-label { font-size: 11px; font-weight: 900; color: var(--accent-pink); letter-spacing: 0.5px; }
     
     .stamp-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px rgba(255, 126, 179, 0.2); }
 
