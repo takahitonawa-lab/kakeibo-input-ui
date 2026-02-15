@@ -6,265 +6,193 @@
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
   <title>名和家の家計簿！</title>
 
-<!-- iOS ホーム画面用（最重要） -->
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="家計入力">
 
-<!-- PWA用（おすすめ） -->
-<link rel="manifest" href="/manifest.webmanifest">
-
-<!-- ブラウザタブ用（任意） -->
-<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
-<link rel="icon" href="/icons/favicon-16.png" sizes="16x16">
-  
   <style>
     :root{
-      --ink:#111827; --muted:#6b7280;
-      --line:#e5e7eb;
-      --bg:#f7f7fb;
-      --btnText:#fff;
-
-      /* ✅ 9割（transform禁止、変数で縮める） */
+      --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f7fb; --btnText:#fff;
       --k: .9;
-
       --radius: calc(18px * var(--k));
-      --title:  calc(34px * var(--k));
-      --sub:    calc(16px * var(--k));
-      --label:  calc(16px * var(--k));
-      --ctrl:   calc(22px * var(--k));
-      --padY:   calc(16px * var(--k));
-      --padX:   calc(14px * var(--k));
-      --gap:    calc(12px * var(--k)); /* ✅ 少し詰めた */
-
+      --btnColor: linear-gradient(135deg, rgba(236,72,153,.92), rgba(167,139,250,.92));
+      
+      /* シャドウ系 */
       --shadowSoft: 0 14px 30px rgba(17, 24, 39, .10);
       --shadowPop:  0 18px 45px rgba(17, 24, 39, .18);
-      --ring: 0 0 0 4px rgba(236, 72, 153, .12);
     }
 
     html,body{
       margin:0;padding:0;
       color:var(--ink);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial;
-      -webkit-text-size-adjust:100%;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       background: var(--bg);
-      overflow:hidden; /* ✅ ページ全体のスクロールを殺す */
+      overflow:hidden;
+      height: 100%;
     }
+    *{ touch-action: manipulation; box-sizing:border-box; }
 
-    *{ touch-action: manipulation; }
-
-    /* ✅ 背景グラデ：固定でズレない */
+    /* 背景 */
     body::before{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none;
+      content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
       background:
         radial-gradient(1200px 600px at 15% 8%, rgba(236,72,153,.18), transparent 60%),
         radial-gradient(900px 500px at 90% 15%, rgba(56,189,248,.20), transparent 55%),
-        radial-gradient(900px 500px at 80% 90%, rgba(167,139,250,.16), transparent 55%),
         transparent;
-      z-index:0;
     }
 
-    /* ✅ pom：右上固定（カードの上に重ねる） */
+    /* ポム画像 */
     body.hasPom::after{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none;
-      opacity:.25;
-      background-repeat:no-repeat;
-      background-position:right 10px top 10px;   /* ✅ 右上 */
+      content:""; position:fixed; inset:0; pointer-events:none; opacity:.25;
+      background-repeat:no-repeat; background-position:right 10px top 10px;
       background-size: min(250px, 34vw);
       background-image: var(--pomBg);
       z-index:3;
-      filter: drop-shadow(0 10px 14px rgba(17,24,39,.18));
     }
 
     .page{
-      max-width: 760px;
-      margin:0 auto;
-      height: 100svh;         /* ✅ 高さを固定して溢れを抑制 */
-      padding: calc(12px * var(--k)) calc(12px * var(--k)) calc(10px * var(--k));
-      box-sizing:border-box;
-
-      display:flex;
-      flex-direction:column;
-      gap: calc(10px * var(--k));
-      position:relative;
-      z-index:1;
+      max-width: 760px; margin:0 auto; height: 100svh;
+      padding: 12px; display:flex; flex-direction:column; gap: 10px;
+      position:relative; z-index:1; overflow-y: auto; /* スクロール許可 */
     }
 
-    .title{
-      font-size:var(--title);
-      font-weight:900;
-　　　 margin: calc(6px * var(--k)) 0 calc(8px * var(--k));
-      letter-spacing:.2px;
-      display:flex;
-      align-items:center;
+    .header-row {
+        display: flex; justify-content: space-between; align-items: center;
+        margin: 6px 0 8px;
     }
-
-    .subtitle{
-      font-size:var(--sub);
-      color:var(--muted);
-      margin:0;
+    .title{ font-size:28px; font-weight:900; letter-spacing:.2px; margin:0;}
+    .subtitle{ font-size:14px; color:var(--muted); margin:0;}
+    
+    /* 更新ボタン */
+    .refresh-btn {
+        background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 50%; width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: var(--muted);
     }
+    .refresh-btn svg { width: 18px; height: 18px; fill: currentColor; transition: transform 0.5s;}
+    .refresh-btn:active svg { transform: rotate(180deg); }
 
-    /* ✅ cardを少しだけコンパクトに */
     .card{
       background: rgba(255,255,255,.72);
       border: 1px solid rgba(229,231,235,.85);
-      border-radius: calc(26px * var(--k));
-      padding: calc(12px * var(--k)) calc(12px * var(--k)) calc(12px * var(--k));
+      border-radius: 24px;
+      padding: 16px;
       box-shadow: var(--shadowSoft);
       backdrop-filter: blur(10px);
-      overflow:hidden;
     }
 
-    form{display:flex;flex-direction:column;gap:var(--gap);}
-
-    label{
-      display:block;
-      font-size:var(--label);
-      color:var(--muted);
-      margin:0 0 calc(6px * var(--k)); /* ✅ 少し詰めた */
-      letter-spacing:.1px;
-    }
-
+    form{display:flex;flex-direction:column;gap:12px;}
+    label{ font-size:14px; color:var(--muted); margin-bottom:4px; display:block;}
+    
     input,select,textarea{
-      width:100%;box-sizing:border-box;
-      border:1px solid rgba(229,231,235,.95);
-      border-radius: calc(22px * var(--k));
-      padding:var(--padY) var(--padX);
+      width:100%; border:1px solid rgba(229,231,235,.95);
+      border-radius: 18px; padding: 14px;
       background: rgba(255,255,255,.92);
-      color:var(--ink);
-      font-size:var(--ctrl);
-      line-height:1.25;
-      outline:none;
-      -webkit-appearance:none;appearance:none;
-      box-shadow: 0 10px 20px rgba(17,24,39,.06);
-      transition: box-shadow .15s ease, border-color .15s ease;
+      font-size:18px; outline:none;
+      box-shadow: 0 4px 10px rgba(0,0,0,.03);
     }
-    input:focus,select:focus,textarea:focus{
-      border-color: rgba(236,72,153,.35);
-      box-shadow: var(--ring), 0 16px 30px rgba(17,24,39,.08);
-    }
+    textarea{ height: 80px; resize:none;}
 
-    .amount{font-weight:900;letter-spacing:.2px;}
-
-    /* ✅ スクロールの主犯：textarea。固定高さ＆resize禁止で溢れにくくする */
-    textarea{
-      height: calc(76px * var(--k));  /* ←ここで調整。まだ溢れるなら 72→68 */
-      resize:none;
-      overflow:auto;
-    }
-
-    /* ✅ ボタン：黒→かわいいピンク寄りに（pomを邪魔しにくい） */
+    /* 送信ボタン（ローディング対応） */
     .btn{
-      width:100%;
-      border:none;border-radius: calc(24px * var(--k));
-      padding: calc(16px * var(--k)) calc(14px * var(--k));
-      background: linear-gradient(135deg, rgba(236,72,153,.92), rgba(167,139,250,.92));
+      width:100%; border:none; border-radius: 20px;
+      padding: 16px;
+      background: var(--btnColor);
       color:var(--btnText);
-      font-weight:900;
-      font-size: calc(22px * var(--k));
+      font-weight:900; font-size: 20px;
       box-shadow: var(--shadowPop);
-      cursor:pointer;
-      margin-top: calc(2px * var(--k));
-      transition: transform .06s ease, filter .15s ease;
-      position:relative;
-      z-index:2;
+      cursor:pointer; position:relative;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .btn:active{
-      transform: translateY(1px) scale(.99);
-      filter: brightness(1.04);
+    .btn:active{ transform: scale(0.98); }
+    .btn:disabled {
+        background: #ccc; cursor: not-allowed; box-shadow: none; transform: none;
     }
+    
+    /* ローディングスピナー */
+    .spinner {
+        display: none;
+        width: 20px; height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn.loading .spinner { display: block; }
+    .btn.loading span { display: none; } /* テキストを隠す */
 
-    .hint{
-      font-size: calc(14px * var(--k));
-      color:var(--muted);
-      line-height:1.35;
-      margin-top: calc(6px * var(--k));
-      padding-left: 2px;
-    }
+    .hint{ font-size: 12px; color:var(--muted); line-height:1.4; padding: 4px;}
 
+    /* トースト */
     .toastWrap{
       position:fixed; inset:0; pointer-events:none;
-      display:flex;align-items:center;justify-content:center;
-      z-index:999;
+      display:flex; align-items:center; justify-content:center; z-index:999;
     }
     .toast{
-      pointer-events:none;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(229,231,235,.9);
-      border-radius: calc(28px * var(--k));
-      box-shadow: 0 22px 60px rgba(17,24,39,.28);
-      padding: calc(16px * var(--k)) calc(16px * var(--k));
-      display:grid;
-      grid-template-columns: calc(108px * var(--k)) 1fr;
-      gap: calc(12px * var(--k));
-      align-items:center;
-      opacity:0;
-      transform: translateY(14px) scale(.98);
-      transition: .18s ease;
-      width:min(calc(420px * var(--k)), 92vw);
-      backdrop-filter: blur(12px);
+      pointer-events:none; background: rgba(255,255,255,.95);
+      border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,.2);
+      padding: 20px; display:flex; gap: 16px; align-items:center;
+      opacity:0; transform: translateY(20px); transition: .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .toast.show{opacity:1;transform: translateY(0) scale(1);}
-    .toast img{
-      width: calc(108px * var(--k));
-      height: calc(108px * var(--k));
-      object-fit:contain;
-      filter: drop-shadow(0 10px 14px rgba(17,24,39,.22));
-    }
-    .toast .t1{font-weight:900;font-size: calc(22px * var(--k));margin:0;}
-    .toast .t2{color:#6b7280;font-size: calc(14px * var(--k));margin:4px 0 0;line-height:1.35;}
+    .toast.show{ opacity:1; transform: translateY(0); }
+    .toast img{ width: 80px; height: 80px; object-fit:contain; }
+    .toast .t1{ font-weight:900; font-size: 20px; margin:0; }
   </style>
 </head>
 
 <body>
   <div class="page">
-    <div>
-      <div class="title">名和家の家計簿！</div>
-      <div class="subtitle">家計簿頑張ってつけてみよう！</div>
+    <div class="header-row">
+      <div>
+        <div class="title">名和家の家計簿！</div>
+        <div class="subtitle">今日も一日お疲れ様！</div>
+      </div>
+      <div class="refresh-btn" id="refreshBtn" title="データを再読み込み">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </div>
     </div>
 
     <div class="card">
       <form id="f">
         <div>
-          <label for="amount">金額（必須）</label>
-          <input id="amount" class="amount" name="amount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="例：1200" required />
+          <label>金額（必須）</label>
+          <input name="amount" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="¥ 0" required style="font-size:24px; font-weight:bold; color:#ec4899;">
         </div>
 
         <div>
-          <label for="category">カテゴリ（必須）</label>
+          <label>カテゴリ（必須）</label>
           <select id="category" name="category" required>
-            <option value="">読み込み中…</option>
+            <option value="">(読み込み中...)</option>
           </select>
         </div>
 
         <div>
-          <label for="method">支払方法（必須）</label>
+          <label>支払方法（必須）</label>
           <select id="method" name="method" required>
-            <option value="">読み込み中…</option>
+            <option value="">(読み込み中...)</option>
           </select>
         </div>
 
         <div>
-          <label for="memo">メモ（任意）</label>
-          <textarea id="memo" name="memo" placeholder="例：コンビニ / ランチ / etc"></textarea>
+          <label>メモ（任意）</label>
+          <textarea name="memo" placeholder="何に使った？"></textarea>
         </div>
 
         <div>
-          <label for="date">日付（任意）</label>
-          <input id="date" name="date" type="date" />
+          <label>日付（空欄なら今日）</label>
+          <input id="dateInput" name="date" type="date" />
         </div>
 
-        <button class="btn" type="submit">追記する</button>
+        <button class="btn" type="submit" id="submitBtn">
+            <span>記録する</span>
+            <div class="spinner"></div>
+        </button>
 
         <div class="hint">
-          ・日付を空にすると「今日」で登録<br/>
-          ・カテゴリは「変動費・特別費のみ」表示（固定費は除外）
+          ※カテゴリ・支払方法が出ない場合は右上の更新ボタンを押してね
         </div>
       </form>
     </div>
@@ -272,105 +200,167 @@
 
   <div class="toastWrap">
     <div class="toast" id="toast">
-      <img id="kuromiImg" alt="Kuromi">
+      <img id="kuromiImg" alt="Success">
       <div>
-        <p class="t1">入力完了！</p>
-        <p class="t2">追記しました</p>
+        <div class="t1">登録しました！</div>
+        <div style="font-size:14px; color:#666;">家計簿への反映完了♪</div>
       </div>
     </div>
   </div>
 
   <script>
+    // ==========================================
+    // 設定エリア
+    // ==========================================
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
+    
+    // キャッシュのキー（ブラウザ保存用）
+    const CACHE_KEY = "nawa_kakeibo_master_v1";
 
-    // ✅ ここをあなたの“新しいポム画像URL”に置き換える
-    // 例： "https://lh3.googleusercontent.com/d/FILE_ID"
-    const POM_OVERRIDE_URL = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png"; // ←ここに貼る（空ならGASのpomUrls[0]を使う）
+    // ==========================================
+    // 1. 高速化ロジック (Cache First)
+    // ==========================================
+    async function loadMasterData(forceReload = false) {
+        const catSelect = document.getElementById("category");
+        const metSelect = document.getElementById("method");
 
-    function jsonp(url) {
-      return new Promise((resolve, reject) => {
-        const cb = "cb_" + Math.random().toString(36).slice(2);
-        window[cb] = (data) => { resolve(data); cleanup(); };
-        const s = document.createElement("script");
-        s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
-        s.onerror = () => { reject(new Error("JSONP failed")); cleanup(); };
-        document.head.appendChild(s);
-        function cleanup(){
-          try{ delete window[cb]; }catch(e){ window[cb]=undefined; }
-          s.remove();
+        // キャッシュがあれば先に表示（爆速化）
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!forceReload && cached) {
+            applyMasterData(JSON.parse(cached));
+            console.log("Used Cache");
+            return; // キャッシュがあれば通信しない
         }
-      });
+
+        // キャッシュがない、または強制更新の場合のみGASへ
+        try {
+            catSelect.options[0].text = "読み込み中...";
+            const data = await jsonp(GAS_URL + "?action=master");
+            
+            // データを保存
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            applyMasterData(data);
+            alert("最新データを読み込みました！");
+        } catch(e) {
+            alert("読み込みエラー: " + e.message);
+        }
     }
 
-    function setSelectOptions(sel, items, placeholder){
-      sel.innerHTML = "";
-      const op0 = document.createElement("option");
-      op0.value = "";
-      op0.textContent = placeholder;
-      sel.appendChild(op0);
-      for (const v of items){
-        const op = document.createElement("option");
-        op.value = v;
-        op.textContent = v;
-        sel.appendChild(op);
-      }
+    function applyMasterData(data) {
+        const setOpts = (sel, items) => {
+            sel.innerHTML = "";
+            const op0 = document.createElement("option");
+            op0.value = ""; op0.textContent = "選択してください";
+            sel.appendChild(op0);
+            items.forEach(v => {
+                const op = document.createElement("option");
+                op.value = v; op.textContent = v;
+                sel.appendChild(op);
+            });
+        };
+
+        setOpts(document.getElementById("category"), data.categories || []);
+        setOpts(document.getElementById("method"), data.methods || []);
+
+        // 画像の設定
+        if (data.pomUrls && data.pomUrls.length) {
+            document.body.classList.add("hasPom");
+            document.body.style.setProperty("--pomBg", `url("${data.pomUrls[0]}")`);
+        }
+        if (data.kuromiUrls && data.kuromiUrls.length) {
+            document.getElementById("kuromiImg").src = data.kuromiUrls[0];
+        }
     }
 
-    function pickFirstReachable(urls, imgEl){
-      let i = 0;
-      imgEl.onerror = () => {
-        i++;
-        if (i < urls.length) imgEl.src = urls[i];
-      };
-      imgEl.src = urls[0];
+    // ==========================================
+    // 2. 日付の日本時間強制 (JST Force)
+    // ==========================================
+    function getTodayJST() {
+        const d = new Date();
+        // UTCからのズレを補正してYYYY-MM-DDを作る
+        const offset = d.getTimezoneOffset() * 60000; 
+        const jstDate = new Date(d.getTime() - offset + (9 * 60 * 60 * 1000)); 
+        return jstDate.toISOString().split('T')[0];
     }
 
-    function setPom(url){
-      document.body.classList.add("hasPom");
-      document.body.style.setProperty("--pomBg", `url("${url}")`);
-    }
-
-    (async () => {
-      const data = await jsonp(GAS_URL + "?action=master");
-      setSelectOptions(document.getElementById("category"), data.categories, "カテゴリを選択");
-      setSelectOptions(document.getElementById("method"), data.methods, "支払方法を選択");
-
-      // ✅ pom：上書きURLがあればそれを最優先
-      if (POM_OVERRIDE_URL && POM_OVERRIDE_URL.trim()){
-        setPom(POM_OVERRIDE_URL.trim());
-      } else if (data.pomUrls && data.pomUrls.length){
-        setPom(data.pomUrls[0]);
-      }
-
-      window.__kuromiUrls = data.kuromiUrls || [];
-      if (window.__kuromiUrls.length){
-        pickFirstReachable(window.__kuromiUrls, document.getElementById("kuromiImg"));
-      }
-    })();
-
-    const toast = document.getElementById("toast");
-    function showToast(){
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3000);
-    }
-
-    document.getElementById("f").addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const fd = new FormData(ev.target);
-
-      const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
-      fd.set("amount", a);
-
-      const res = await fetch(GAS_URL, { method:"POST", body: fd });
-      const js = await res.json();
-      if (!js.ok){
-        alert(js.error || "エラー");
-        return;
-      }
-
-      showToast();
-      ev.target.reset();
+    // ==========================================
+    // 初期化処理
+    // ==========================================
+    window.addEventListener("DOMContentLoaded", () => {
+        loadMasterData(); // まずキャッシュ確認
+        
+        // 更新ボタン
+        document.getElementById("refreshBtn").onclick = () => loadMasterData(true);
     });
+
+    // ==========================================
+    // 3. 送信処理 (Loading State)
+    // ==========================================
+    document.getElementById("f").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const btn = document.getElementById("submitBtn");
+        const fd = new FormData(ev.target);
+
+        // UIを「送信中」に変更
+        btn.disabled = true;
+        btn.classList.add("loading");
+
+        // 日付補正：空なら「今日」をセットして送信データに含める
+        let dateVal = fd.get("date");
+        if (!dateVal) {
+            // 入力がない場合、ブラウザの現在時刻（JST）を強制セット
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = ("0" + (now.getMonth()+1)).slice(-2);
+            const d = ("0" + now.getDate()).slice(-2);
+            dateVal = `${y}-${m}-${d}`; // YYYY-MM-DD
+        }
+        fd.set("date", dateVal);
+
+        // 金額のカンマ除去など
+        const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
+        fd.set("amount", a);
+
+        try {
+            // 送信（POST）
+            const res = await fetch(GAS_URL, { method: "POST", body: fd });
+            const js = await res.json();
+            
+            if (!js.ok) throw new Error(js.error || "不明なエラー");
+
+            // 成功時
+            showToast();
+            ev.target.reset();
+            // 日付欄はリセットされると空になるので、必要なら今日のままにする等の配慮も可
+
+        } catch(e) {
+            alert("送信失敗: " + e.message);
+        } finally {
+            // UIを元に戻す
+            btn.disabled = false;
+            btn.classList.remove("loading");
+        }
+    });
+
+    // トースト表示
+    function showToast(){
+        const t = document.getElementById("toast");
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 3000);
+    }
+
+    // JSONP関数（GET用）
+    function jsonp(url) {
+        return new Promise((resolve, reject) => {
+            const cb = "cb_" + Math.random().toString(36).slice(2);
+            window[cb] = (data) => { resolve(data); cleanup(); };
+            const s = document.createElement("script");
+            s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+            s.onerror = () => { reject(new Error("Network Error")); cleanup(); };
+            document.head.appendChild(s);
+            function cleanup(){ try{delete window[cb];}catch(e){} s.remove(); }
+        });
+    }
   </script>
 </body>
 </html>
