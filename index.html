@@ -3,398 +3,181 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
   <title>名和家の家計簿！</title>
-
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 
   <style>
     :root{
-      --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f7fb; --btnText:#fff;
-      --k: .9;
-      --radius: 18px;
+      --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f7fb;
       --btnColor: linear-gradient(135deg, rgba(236,72,153,.92), rgba(167,139,250,.92));
-      --danger: #ef4444;
-      --barBg: #e5e7eb; --barFill: #34d399; /* 予算バーの色：緑 */
     }
 
-    html,body{
-      margin:0;padding:0;
-      color:var(--ink);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      background: var(--bg);
-      height: 100%;
-      overflow: hidden;
-    }
-    *{ touch-action: manipulation; box-sizing:border-box; }
+    html,body{ margin:0; padding:0; background: var(--bg); font-family: sans-serif; height: 100%; overflow: hidden; }
+    *{ box-sizing: border-box; touch-action: manipulation; }
 
-    /* 背景装飾 */
-    body::before{
-      content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
-      background:
-        radial-gradient(1200px 600px at 15% 8%, rgba(236,72,153,.18), transparent 60%),
-        radial-gradient(900px 500px at 90% 15%, rgba(56,189,248,.20), transparent 55%),
-        transparent;
+    /* 背景と画像の修正 */
+    body::before {
+      content:""; position:fixed; inset:0; z-index:0;
+      background: radial-gradient(circle at 15% 10%, rgba(236,72,153,0.1), transparent);
     }
 
-    /* 【修正】ポム画像を背景（背面）に固定して透過させる */
-    body.hasPom::after{
-      content:""; position:fixed; inset:0; pointer-events:none; 
-      opacity:0.15; /* 透過度を下げて邪魔しないように */
-      background-repeat:no-repeat; 
-      background-position: center 25%; /* 少し上に配置 */
-      background-size: min(350px, 80vw);
-      background-image: var(--pomBg);
-      z-index:-1; /* カードよりも後ろへ */
-      filter: grayscale(10%);
+    /* ポム画像：背景として透過表示 */
+    #bg-image {
+      position: fixed; inset: 0; pointer-events: none; z-index: -1;
+      opacity: 0.15; background-repeat: no-repeat; background-position: center 20%;
+      background-size: min(300px, 70vw);
     }
 
-    .page{
-      max-width: 760px; margin:0 auto; height: 100svh;
-      padding: 12px; display:flex; flex-direction:column; gap: 12px;
-      position:relative; z-index:1; overflow-y: auto;
-      padding-bottom: 80px;
-    }
-
-    .header-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; }
-    .title{ font-size:24px; font-weight:900; margin:0;}
-    .subtitle{ font-size:12px; color:var(--muted); margin:0;}
+    .page { max-width: 600px; margin: 0 auto; padding: 16px; height: 100svh; overflow-y: auto; position: relative; z-index: 1; }
     
-    .refresh-btn {
-        background: rgba(255,255,255,0.6); border-radius: 50%; width: 32px; height: 32px;
-        display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted);
-    }
-    .refresh-btn svg { width: 18px; height: 18px; fill: currentColor; transition: transform 0.5s;}
-    .refresh-btn:active svg { transform: rotate(180deg); }
-
-    /* 予算メーター */
     .budget-card {
-        background: rgba(255,255,255,0.8); border-radius: 16px; padding: 12px 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 4px;
-        animation: fadeIn 0.5s ease;
-        backdrop-filter: blur(5px);
+      background: rgba(255,255,255,0.8); border-radius: 16px; padding: 12px;
+      margin-bottom: 16px; backdrop-filter: blur(5px);
     }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+    .budget-bar-bg { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .budget-bar-fill { height: 100%; background: #34d399; transition: width 0.5s; }
 
-    .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 6px; }
-    .budget-bar-bg { height: 10px; background: var(--barBg); border-radius: 5px; overflow: hidden; }
-    .budget-bar-fill { height: 100%; background: var(--barFill); width: 0%; transition: width 1s ease; }
-    .budget-bar-fill.warning { background: #fbbf24; }
-    .budget-bar-fill.danger { background: #ef4444; }
-
-    .card{
-      background: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,0.9);
-      border-radius: 24px; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-      backdrop-filter: blur(10px);
-    }
-
-    form{display:flex;flex-direction:column;gap:12px;}
-    label{ font-size:13px; color:var(--muted); margin-bottom:4px; display:block;}
+    .card { background: rgba(255,255,255,0.9); border-radius: 20px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     
-    input,select,textarea{
-      width:100%; max-width: 100%; border:1px solid rgba(229,231,235,.95);
-      border-radius: 16px; padding: 12px; background: #fff;
-      font-size:16px; outline:none;
-      -webkit-appearance: none; appearance: none;
-    }
-    textarea{ height: 60px; resize:none;}
-    input[type="date"] { min-width: 0; }
-
-    .btn{
-      width:100%; border:none; border-radius: 18px; padding: 14px;
-      background: var(--btnColor); color:var(--btnText);
-      font-weight:900; font-size: 18px; box-shadow: 0 8px 20px rgba(236, 72, 153, 0.3);
-      cursor:pointer; position:relative; display: flex; align-items: center; justify-content: center;
-      transition: transform 0.1s;
-    }
-    .btn:active{ transform: scale(0.98); }
-    .btn:disabled { opacity: 0.7; transform: none; cursor: default; }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
     
-    .spinner { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .btn.loading .spinner { display: block; } .btn.loading span { display: none; }
+    /* 金額入力のUI修正 */
+    .amount-input-wrapper { position: relative; display: flex; align-items: center; }
+    .currency-symbol { position: absolute; left: 12px; font-weight: bold; font-size: 20px; color: #ec4893; }
+    input[name="amount"] { padding-left: 35px !important; font-size: 24px !important; font-weight: 900; color: #ec4893; }
 
-    /* 履歴リスト */
-    .history-section { margin-top: 10px; }
-    .history-title { font-size: 14px; color: var(--muted); margin-bottom: 8px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
-    .analytics-link { 
-        font-size: 12px; color: #3b82f6; text-decoration: none; 
-        display: flex; align-items: center; gap: 4px; padding: 4px 8px;
-        background: rgba(59, 130, 246, 0.1); border-radius: 6px;
+    input, select, textarea {
+      width: 100%; border: 1px solid #ddd; border-radius: 12px; padding: 12px;
+      font-size: 16px; outline: none; margin-bottom: 12px; background: #fff;
     }
-    
-    .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+
+    .btn {
+      width: 100%; border: none; border-radius: 14px; padding: 16px;
+      background: var(--btnColor); color: #fff; font-weight: bold; font-size: 18px;
+    }
+
+    /* 履歴 */
     .history-item {
-        background: rgba(255,255,255,0.7); border-radius: 12px; padding: 10px 14px;
-        display: flex; justify-content: space-between; align-items: center; font-size: 14px;
-        border: 1px solid rgba(0,0,0,0.03); transition: opacity 0.3s;
-        backdrop-filter: blur(5px);
+      background: rgba(255,255,255,0.7); border-radius: 12px; padding: 10px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
     }
-    .h-left { display: flex; flex-direction: column; gap: 2px; }
-    .h-cat { font-size: 11px; color: var(--muted); }
-    .h-memo { font-weight: bold; font-size: 15px; } /* メモ（店名）を強調 */
-    .h-right { display: flex; align-items: center; gap: 10px; }
-    .h-amount { font-weight: bold; font-size: 16px; color: var(--ink); }
-    .del-btn {
-        background: #fee2e2; color: #ef4444; border: none; border-radius: 8px;
-        width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-        cursor: pointer; font-size: 18px; margin-left: 8px;
-    }
-
-    /* トースト */
-    .toastWrap{ position:fixed; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center; z-index:999; }
-    .toast{
-      background: rgba(255,255,255,.95); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,.2);
-      padding: 20px; display:flex; gap: 16px; align-items:center;
-      opacity:0; transform: translateY(20px); transition: .3s;
-    }
-    .toast.show{ opacity:1; transform: translateY(0); }
-    .toast img{ width: 80px; height: 80px; object-fit:contain; }
+    .del-btn { color: #ef4444; border: none; background: none; font-size: 20px; cursor: pointer; }
   </style>
 </head>
 
 <body>
+  <div id="bg-image"></div>
   <div class="page">
-    <div class="header-row">
-      <div>
-        <div class="title">名和家の家計簿！</div>
-        <div class="subtitle">今日も一日お疲れ様！</div>
+    <div class="budget-card" id="budgetCard">
+      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold;">
+        <span>今月の実績</span>
+        <span><span id="currentTotal">0</span> / <span id="budgetLimit">0</span></span>
       </div>
-      <div class="refresh-btn" id="refreshBtn" title="更新">
-        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-      </div>
-    </div>
-
-    <div class="budget-card" id="budgetCard" style="display:none;">
-      <div class="budget-info">
-        <span id="monthLabel">今月の出費</span>
-        <span><span id="currentTotal">0</span>円 / <span id="budgetLimit">0</span>円</span>
-      </div>
-      <div class="budget-bar-bg">
-        <div class="budget-bar-fill" id="budgetBar"></div>
-      </div>
-      <div style="text-align:right; font-size:11px; color:#6b7280; margin-top:4px;">
-        消費率: <span id="percentLabel">0%</span>
-      </div>
+      <div class="budget-bar-bg"><div class="budget-bar-fill" id="budgetBar"></div></div>
     </div>
 
     <div class="card">
       <form id="f">
-        <div>
-          <label>金額（必須）</label>
-          <input name="amount" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="¥ 0" required style="font-size:24px; font-weight:bold; color:#ec4899;">
+        <label>金額</label>
+        <div class="amount-input-wrapper">
+          <span class="currency-symbol">¥</span>
+          <input name="amount" type="tel" inputmode="numeric" placeholder="0" required>
         </div>
 
-        <div>
-          <label>カテゴリ（必須）</label>
-          <select id="category" name="category" required><option value="">(読み込み中...)</option></select>
-        </div>
+        <label>カテゴリ</label>
+        <select id="category" name="category" required></select>
 
-        <div>
-          <label>支払方法（必須）</label>
-          <select id="method" name="method" required><option value="">(読み込み中...)</option></select>
-        </div>
+        <label>支払方法</label>
+        <select id="method" name="method" required></select>
 
-        <div>
-          <label>メモ（店名など任意）</label>
-          <textarea name="memo" placeholder="例：コープ / 鬼がらし"></textarea>
-        </div>
+        <label>メモ（店名など）</label>
+        <input name="memo" placeholder="例：コープ">
 
-        <div>
-          <label>日付（空欄なら今日）</label>
-          <input id="dateInput" name="date" type="date" />
-        </div>
+        <label>日付（空欄なら今日）</label>
+        <input name="date" type="date">
 
-        <button class="btn" type="submit" id="submitBtn">
-            <span>記録する</span>
-            <div class="spinner"></div>
-        </button>
+        <button class="btn" type="submit" id="submitBtn">記録する</button>
       </form>
     </div>
 
-    <div class="history-section">
-        <div class="history-title">
-            <span>直近の記録</span>
-            <a href="https://lookerstudio.google.com/" target="_blank" class="analytics-link">
-                📊 グラフで見る
-            </a>
-        </div>
-        <ul class="history-list" id="historyList">
-            <li style="text-align:center; color:#999; font-size:12px; padding:10px;">履歴を読み込み中...</li>
-        </ul>
-    </div>
-  </div>
-
-  <div class="toastWrap">
-    <div class="toast" id="toast">
-      <img id="kuromiImg" alt="Success">
-      <div>
-        <div class="t1">登録しました！</div>
-        <div style="font-size:14px; color:#666;">履歴に追加されます</div>
-      </div>
+    <div style="margin-top:20px;">
+      <div style="font-size:14px; font-weight:bold; color:var(--muted); margin-bottom:10px;">直近5件の履歴</div>
+      <div id="historyList"></div>
     </div>
   </div>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
-    const POM_OVERRIDE_URL = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png";
-    const CACHE_KEY = "nawa_kakeibo_v3_fixed"; 
+    const POM_IMG_PATH = "icons/Gemini_Generated_Image_va05a4va05a4va05_transparent.png";
 
-    async function loadData(force = false) {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (!force && cached) {
-            renderUI(JSON.parse(cached));
-            fetchLatestData(); 
-        } else {
-            await fetchLatestData();
-        }
-    }
+    async function loadData() {
+        // 画像を即座にセット
+        document.getElementById('bg-image').style.backgroundImage = `url('${POM_IMG_PATH}')`;
 
-    async function fetchLatestData() {
-        try {
-            const data = await jsonp(GAS_URL + "?action=master");
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-            renderUI(data);
-        } catch(e) { console.error("Fetch Error:", e); }
-    }
+        const data = await jsonp(GAS_URL + "?action=master");
+        
+        // 予算反映
+        document.getElementById("currentTotal").textContent = "¥" + Number(data.budget.total).toLocaleString();
+        document.getElementById("budgetLimit").textContent = "¥" + Number(data.budget.limit).toLocaleString();
+        document.getElementById("budgetBar").style.width = data.budget.percent + "%";
 
-    function renderUI(data) {
-        // 1. プルダウン生成 (Masterから取得)
-        const setOpts = (id, items) => {
-            const el = document.getElementById(id);
-            if(el.options.length > 1 && el.value) return; 
-            el.innerHTML = '<option value="">選択してください</option>';
-            if(items) {
-                items.forEach(v => {
-                    const op = document.createElement("option");
-                    op.value = v; op.textContent = v;
-                    el.appendChild(op);
-                });
-            }
+        // プルダウン
+        const fill = (id, list) => {
+          const el = document.getElementById(id);
+          el.innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join('');
         };
-        setOpts("category", data.categories);
-        setOpts("method", data.methods);
+        fill("category", data.categories);
+        fill("method", data.methods);
 
-        // 2. 画像設定 (背面に設定)
-        const pomUrl = (POM_OVERRIDE_URL && POM_OVERRIDE_URL.trim()) ? POM_OVERRIDE_URL : (data.pomUrls && data.pomUrls[0]);
-        if (pomUrl) {
-            document.body.classList.add("hasPom");
-            document.body.style.setProperty("--pomBg", `url("${pomUrl}")`);
-        }
-        if (data.kuromiUrls && data.kuromiUrls.length) {
-            document.getElementById("kuromiImg").src = data.kuromiUrls[0];
-        }
-
-        // 3. 予算メーター
-        if (data.budget) {
-            document.getElementById("budgetCard").style.display = "block";
-            document.getElementById("currentTotal").textContent = Number(data.budget.total).toLocaleString();
-            document.getElementById("budgetLimit").textContent = Number(data.budget.limit).toLocaleString();
-            document.getElementById("percentLabel").textContent = data.budget.percent + "%";
-            
-            const bar = document.getElementById("budgetBar");
-            bar.style.width = data.budget.percent + "%";
-            bar.className = "budget-bar-fill";
-            if(data.budget.percent > 80) bar.classList.add("warning");
-            if(data.budget.percent > 100) bar.classList.add("danger");
-        }
-
-        // 4. 履歴リスト (Spend_Logの列順に合わせて修正)
-        const list = document.getElementById("historyList");
-        list.innerHTML = "";
-        if(!data.history || data.history.length === 0) {
-            list.innerHTML = '<li style="text-align:center; color:#999; font-size:12px; padding:10px;">履歴がありません</li>';
-        } else {
-            data.history.forEach(h => {
-                const li = document.createElement("li");
-                li.className = "history-item";
-                li.innerHTML = `
-                    <div class="h-left">
-                        <span class="h-memo">${h.memo || '-'}</span>
-                        <span class="h-cat">${h.date} · ${h.category}</span>
-                    </div>
-                    <div class="h-right">
-                        <span class="h-amount">¥${Number(h.amount).toLocaleString()}</span>
-                        ${h.id ? `<button class="del-btn" onclick="deleteEntry('${h.id}', this)">×</button>` : ''}
-                    </div>
-                `;
-                list.appendChild(li);
-            });
-        }
+        // 履歴反映
+        document.getElementById("historyList").innerHTML = data.history.map(h => `
+          <div class="history-item">
+            <div>
+              <div style="font-weight:bold;">${h.memo || h.category}</div>
+              <div style="font-size:11px; color:#999;">${h.date} · ${h.category}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-weight:bold;">¥${Number(h.amount).toLocaleString()}</span>
+              <button class="del-btn" onclick="deleteItem('${h.id}')">×</button>
+            </div>
+          </div>
+        `).join('');
     }
 
-    window.deleteEntry = async (id, btnEl) => {
-        if(!confirm("この記録を削除しますか？")) return;
-        const li = btnEl.closest("li");
-        li.style.opacity = "0.3";
-        try {
-            const fd = new FormData();
-            fd.set("action", "delete");
-            fd.set("rowId", id);
-            await fetch(GAS_URL, { method: "POST", body: fd });
-            li.remove();
-            fetchLatestData(); 
-        } catch(e) {
-            alert("削除に失敗しました");
-            li.style.opacity = "1";
-        }
+    // 削除処理
+    window.deleteItem = async (id) => {
+      if(!confirm("削除しますか？")) return;
+      const fd = new FormData(); fd.set("action", "delete"); fd.set("rowId", id);
+      await fetch(GAS_URL, { method: "POST", body: fd });
+      loadData();
     };
 
-    document.getElementById("f").addEventListener("submit", (ev) => {
-        ev.preventDefault();
-        const btn = document.getElementById("submitBtn");
-        const fd = new FormData(ev.target);
+    document.getElementById("f").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      const fd = new FormData(ev.target);
+      
+      // 金額のクレンジング
+      const amt = fd.get("amount").replace(/[^0-9]/g, "");
+      fd.set("amount", amt);
 
-        showToast();
-        ev.target.reset();
-        document.activeElement.blur();
-        btn.disabled = true;
-        setTimeout(() => btn.disabled = false, 500);
-
-        let dateVal = fd.get("date");
-        if (!dateVal) {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = ("0" + (now.getMonth()+1)).slice(-2);
-            const d = ("0" + now.getDate()).slice(-2);
-            dateVal = `${y}/${m}/${d}`;
-        }
-        fd.set("date", dateVal);
-        const a = (fd.get("amount") || "").toString().replace(/[^\d]/g, "");
-        fd.set("amount", a);
-
-        fetch(GAS_URL, { method: "POST", body: fd, keepalive: true })
-          .then(() => {
-              setTimeout(fetchLatestData, 2000);
-          });
+      await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true });
+      ev.target.reset();
+      btn.disabled = false;
+      loadData();
     });
-
-    window.addEventListener("DOMContentLoaded", () => {
-        loadData();
-        document.getElementById("refreshBtn").onclick = () => {
-            loadData(true);
-        };
-    });
-
-    function showToast(){
-        const t = document.getElementById("toast");
-        t.classList.add("show");
-        setTimeout(() => t.classList.remove("show"), 2500);
-    }
 
     function jsonp(url) {
-        return new Promise((resolve, reject) => {
-            const cb = "cb_" + Math.random().toString(36).slice(2);
-            window[cb] = (data) => { resolve(data); cleanup(); };
-            const s = document.createElement("script");
-            s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
-            s.onerror = () => { reject(new Error("Network Error")); cleanup(); };
-            document.head.appendChild(s);
-            function cleanup(){ try{delete window[cb];}catch(e){} s.remove(); }
-        });
+      return new Promise(res => {
+        const cb = "cb" + Date.now();
+        window[cb] = d => { res(d); document.head.removeChild(s); };
+        const s = document.createElement("script");
+        s.src = `${url}&callback=${cb}`;
+        document.head.appendChild(s);
+      });
     }
+
+    loadData();
   </script>
 </body>
 </html>
