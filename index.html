@@ -1,357 +1,170 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>名和家の家計簿</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Kosugi Maru', sans-serif;
-            background-color: #fff0f5; /* 淡いピンクの背景 */
-            color: #333;
-            margin: 0;
-            padding: 10px;
-            padding-bottom: 70px; /* タブバーのスペース確保 */
-        }
-        h2 {
-            text-align: center;
-            color: #d87093;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .header-icon {
-            width: 40px;
-            height: auto;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #c71585;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ffb6c1;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-            font-family: 'Kosugi Maru', sans-serif;
-        }
-        input:focus, select:focus {
-            outline: none;
-            border-color: #ff69b4;
-            box-shadow: 0 0 5px rgba(255,105,180,0.5);
-        }
-        .btn {
-            background-color: #ff69b4;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 25px;
-            width: 100%;
-            font-size: 18px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background-color 0.3s;
-            font-family: 'Kosugi Maru', sans-serif;
-        }
-        .btn:hover {
-            background-color: #ff1493;
-        }
-        .category-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .cat-btn {
-            background-color: white;
-            border: 1px solid #ffb6c1;
-            color: #c71585;
-            padding: 8px 12px;
-            border-radius: 15px;
-            font-size: 14px;
-            cursor: pointer;
-            font-family: 'Kosugi Maru', sans-serif;
-            flex: 1 1 calc(25% - 5px); /* 4列に調整 */
-            text-align: center;
-        }
-        .cat-btn.selected {
-            background-color: #ffb6c1;
-            color: white;
-            font-weight: bold;
-        }
-        #message {
-            text-align: center;
-            margin-top: 15px;
-            font-weight: bold;
-            color: #32cd32;
-        }
-        /* スピナー（ローディング）のスタイル */
-        .spinner {
-            display: none;
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 105, 180, 0.3);
-            border-radius: 50%;
-            border-top-color: #ff69b4;
-            animation: spin 1s ease-in-out infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        /* 下部固定タブバーのスタイル */
-        .bottom-tab-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background-color: #ffffff;
-            border-top: 1px solid #ddd;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 1000;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-        }
-        .tab-item {
-            flex: 1;
-            text-align: center;
-            color: #888;
-            font-size: 12px;
-            cursor: pointer;
-            padding: 10px 0;
-            transition: 0.2s;
-        }
-        .tab-item.active {
-            color: #ff69b4; /* クロミちゃんカラーに合わせたピンク */
-            font-weight: bold;
-        }
-        .tab-icon {
-            font-size: 24px;
-            display: block;
-            margin-bottom: 2px;
-        }
-        /* 画面切り替え用のコンテナ */
-        #view-input {
-            display: block; /* 初期表示 */
-        }
-        #view-dashboard {
-            display: none;
-            width: 100%;
-            height: calc(100vh - 60px);
-            margin: -10px; /* bodyのpaddingを相殺 */
-        }
-        #view-dashboard iframe {
-            width: 100vw;
-            height: 100%;
-            border: none;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <title>名和家の家計簿！</title>
+  <style>
+    :root{
+      --ink: #444; --muted: #888;
+      --bg-pink: #fff0f5; --bg-purple: #f3f0ff; --accent-pink: #ff7eb3;
+      --card-bg: rgba(255, 255, 255, 0.85); --border-thick: 2.5px;
+      --stamp-size: 86px;
+    }
+    html,body{
+      margin:0; padding:0; background: linear-gradient(135deg, var(--bg-pink) 0%, var(--bg-purple) 100%);
+      background-attachment: fixed; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100%; overflow: hidden; color: var(--ink);
+    }
+    *{ box-sizing: border-box; touch-action: manipulation; }
+    .page { max-width: 500px; margin: 0 auto; padding: 10px; height: 100svh; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; }
+    
+    .header { position: relative; margin-bottom: 8px; min-height: 105px; padding: 10px 5px 0; }
+    .title-group { position: relative; z-index: 2; padding-right: 100px; } 
+    .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #555; }
+    .title-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
+    .top-icon { position: absolute; right: 5px; top: 0px; width: 110px; height: 110px; object-fit: contain; opacity: 0.35; z-index: 0; pointer-events: none; }
+
+    .budget-card {
+      position: relative; z-index: 2; background: #fff; border-radius: 20px; padding: 16px;
+      margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: var(--border-thick) solid #fff;
+    }
+    .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: var(--accent-pink); }
+    .budget-bar-bg { height: 12px; background: #f5f5f5; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+    .budget-bar-fill { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); width: 0%; transition: width 1s ease; }
+
+    .card { background: var(--card-bg); border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: var(--border-thick) solid #fff; backdrop-filter: blur(5px); }
+    label { font-size: 10.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: bold; padding-left: 4px; white-space: nowrap; }
+    
+    .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 12px; }
+    .currency { position: absolute; left: 15px; font-weight: 900; font-size: 24px; color: var(--accent-pink); }
+    input[name="amount"] { padding-left: 45px !important; font-size: 28px !important; font-weight: 900; color: var(--accent-pink); border: 2px solid #ffe0ec !important; background: #fff !important; border-radius: 16px; }
+
+    input, select { width: 100%; border: 1.5px solid #eee; border-radius: 14px; padding: 0 12px; height: 46px; font-size: 15px; outline: none; margin-bottom: 12px; background: #fff; }
+
+    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 5px; }
+    .date-box { flex: 0.52; min-width: 0; } 
+    .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
+
+    .btn-group { flex: 0.48; display: flex; flex-direction: column; align-items: center; }
+    .stamp-btn {
+      width: var(--stamp-size); height: var(--stamp-size); border-radius: 22px;
+      border: 3px solid #fff; background: linear-gradient(135deg, #ffbdc0, #fecfef);
+      box-shadow: 0 5px 0px rgba(255, 126, 179, 0.2); cursor: pointer; position: relative;
+      display: flex; align-items: center; justify-content: center; transition: all 0.1s; padding: 0; overflow: hidden;
+    }
+    .btn-inner-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 100%; text-align: center; font-size: 10px; font-weight: 900; color: #fff; opacity: 0.65; z-index: 2; pointer-events: none; text-shadow: 0 0 4px rgba(0,0,0,0.2); }
+    .stamp-btn img { width: 90%; height: 90%; object-fit: contain; position: relative; z-index: 1; margin-top: 4px; }
+    .stamp-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px rgba(255, 126, 179, 0.2); }
+
+    .history-item { background: rgba(255, 255, 255, 0.7); border-radius: 18px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1.5px solid #fff; }
+    .h-memo { font-weight: bold; font-size: 14px; }
+    .h-sub { font-size: 10px; color: var(--muted); }
+    .del-btn { color: #fff; border: none; background: #ffb5d2; border-radius: 10px; width: 32px; height: 32px; font-weight: bold; cursor: pointer; }
+
+    .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
+    .toast { background: #fff; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; display: flex; gap: 15px; align-items: center; opacity: 0; transform: translateY(20px); transition: .4s; border: 3px solid #ffdeeb; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast img { width: 70px; height: 70px; object-fit: contain; }
+  </style>
 </head>
 <body>
-
-<div id="view-input">
-    <h2>
-        <img src="kuromi_icon.png" alt="クロミ" class="header-icon" onerror="this.style.display='none'"> 
-        名和家の家計簿！
-    </h2>
-
-    <form id="kakeiboForm">
-        <div class="form-group">
-            <label for="date">📅 日付</label>
-            <input type="date" id="date" name="date" required>
-        </div>
-
-        <div class="form-group">
-            <label>🏷️ カテゴリ (タップで選択)</label>
-            <div class="category-buttons" id="categoryButtons">
-                </div>
-            <input type="hidden" id="category" name="category" required>
-        </div>
-
-        <div class="form-group">
-            <label for="amount">💰 金額 (円)</label>
-            <input type="number" id="amount" name="amount" placeholder="例: 1500" required>
-        </div>
-
-        <div class="form-group">
-            <label for="method">💳 支払方法</label>
-            <select id="method" name="method" required>
-                </select>
-        </div>
-
-        <div class="form-group">
-            <label for="memo">📝 メモ (任意)</label>
-            <input type="text" id="memo" name="memo" placeholder="買ったもの等">
-        </div>
-
-        <button type="submit" class="btn" id="submitBtn">登録する！ 🎀</button>
-        <div class="spinner" id="loadingSpinner"></div>
-    </form>
-
-    <div id="message"></div>
-</div>
-
-<div id="view-dashboard">
-    <iframe src="https://script.google.com/macros/s/AKfycbxB4i2wRjP1wV3yI4E7y71b562W-4R_7A/exec"></iframe>
-</div>
-
-<div class="bottom-tab-bar">
-    <div class="tab-item active" id="tab-input" onclick="switchTab('input')">
-        <span class="tab-icon">✏️</span>
-        入力
+  <div class="page">
+    <div class="header">
+      <div class="title-group">
+        <h1 class="title-main">名和家の家計簿！</h1>
+        <p class="title-sub" id="randomMsg">読み込み中...</p>
+      </div>
+      <img src="icon_trans.png" class="top-icon" onerror="this.style.display='none'">
     </div>
-    <div class="tab-item" id="tab-dashboard" onclick="switchTab('dashboard')">
-        <span class="tab-icon">📊</span>
-        分析
+
+    <div class="budget-card">
+      <div class="budget-info">
+        <span>実績 / 予算</span>
+        <span>¥<span id="cur">0</span> / <span id="lim">0</span></span>
+      </div>
+      <div class="budget-bar-bg"><div class="budget-bar-fill" id="bar"></div></div>
     </div>
-</div>
 
-<script>
-    // -------------------------
-    // 設定
-    // -------------------------
-    // ★ GASのウェブアプリURL (入力データ送信用アクションパラメータ付き)
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxB4i2wRjP1wV3yI4E7y71b562W-4R_7A/exec?action=master'; 
+    <div class="card">
+      <form id="f">
+        <label>金額</label>
+        <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
 
-    // 初期化
-    document.getElementById('date').valueAsDate = new Date();
-    
-    // -------------------------
-    // タブ切り替え機能
-    // -------------------------
-    function switchTab(tabName) {
-        if (tabName === 'input') {
-            document.getElementById('view-input').style.display = 'block';
-            document.getElementById('view-dashboard').style.display = 'none';
-            document.getElementById('tab-input').classList.add('active');
-            document.getElementById('tab-dashboard').classList.remove('active');
-        } else {
-            document.getElementById('view-input').style.display = 'none';
-            document.getElementById('view-dashboard').style.display = 'block';
-            document.getElementById('tab-input').classList.remove('active');
-            document.getElementById('tab-dashboard').classList.add('active');
-        }
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
+          <div style="flex:1.2;"><label>分類（食費等）</label><select id="category" name="category" required style="margin-bottom:0;"></select></div>
+          <div style="flex:1;"><label>支払方法</label><select id="method" name="method" required style="margin-bottom:0;"></select></div>
+        </div>
+
+        <label>カテゴリ（自由記入欄）</label>
+        <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
+
+        <div class="row-flex">
+          <div class="date-box"><label>日付（空欄は今日扱い）</label><input name="date" type="date"></div>
+          <div class="btn-group">
+            <button class="stamp-btn" type="submit" id="subBtn">
+              <span class="btn-inner-label">記録する！</span>
+              <img src="stamp.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/todo-list.png'">
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div style="margin-top:20px; padding-bottom: 40px;">
+      <div style="font-size:13px; font-weight:bold; color:var(--muted); margin-bottom:10px; padding-left:10px;">最近の記録</div>
+      <div id="hList"></div>
+    </div>
+  </div>
+
+  <div class="toastWrap"><div class="toast" id="tst"><img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'"><div><div style="font-weight:900; font-size:20px; color:var(--accent-pink);">登録完了！</div><div style="font-size:12px; color:#a0a0b0;">家計簿を更新したよ♪</div></div></div></div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
+    const messages = ["登録作業、いつもありがとう！","体調は大丈夫？しっかり寝てね","今日も一日、お疲れ様！","無理しないで、ゆっくり休んでね","いつも家計を支えてくれて感謝！","美味しいもの食べてリラックス♪","少しずつ、理想の家計へ！","明日も素敵な一日になりますように","あなたの頑張り、見てるよ","今日も100点！自分を褒めてね"];
+
+    async function load() {
+      const msgEl = document.getElementById("randomMsg");
+      msgEl.textContent = messages[Math.floor(Math.random() * messages.length)];
+      const d = await jsonp(GAS_URL + "?action=master");
+      document.getElementById("cur").textContent = Math.floor(d.budget.total).toLocaleString();
+      document.getElementById("lim").textContent = Math.floor(d.budget.limit).toLocaleString();
+      document.getElementById("bar").style.width = d.budget.percent + "%";
+      const f = (i, l) => { document.getElementById(i).innerHTML = l.map(v => `<option value="${v}">${v}</option>`).join(''); };
+      f("category", d.categories); f("method", d.methods);
+      document.getElementById("hList").innerHTML = d.history.map(h => `
+        <div class="history-item">
+          <div><div class="h-memo">${h.memo || h.category}</div><div class="h-sub">${h.date} · ${h.category}</div></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${h.amount.toLocaleString()}</span><button class="del-btn" onclick="del('${h.id}')">×</button></div>
+        </div>`).join('');
     }
 
-    // -------------------------
-    // マスターデータの取得 (JSONP方式)
-    // -------------------------
-    function fetchMasterData() {
-        const script = document.createElement('script');
-        script.src = GAS_URL + '&callback=initMasterData';
-        document.body.appendChild(script);
-    }
+    // 削除機能の修正：FormDataを使用してPOST送信
+    window.del = async (id) => { 
+      if(!confirm("この記録を消してもいい？")) return; 
+      const fd = new FormData();
+      fd.append("action", "delete");
+      fd.append("rowId", id);
+      
+      try {
+        await fetch(GAS_URL, { method: "POST", body: fd }); 
+        load(); 
+      } catch (e) {
+        alert("削除に失敗しました。");
+      }
+    };
 
-    function initMasterData(data) {
-        console.log("Master Data loaded:", data);
-        
-        // カテゴリボタンの生成
-        const catContainer = document.getElementById('categoryButtons');
-        catContainer.innerHTML = ''; // クリア
-        const categories = data.categories || ["食費", "外食", "日用品", "交通費", "交際費", "趣味", "特別費"]; // デフォルト
-        
-        categories.forEach(cat => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'cat-btn';
-            btn.textContent = cat;
-            btn.onclick = function() {
-                // 選択状態のリセット
-                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
-                // 選択状態にする
-                this.classList.add('selected');
-                document.getElementById('category').value = cat;
-            };
-            catContainer.appendChild(btn);
-        });
-
-        // 支払方法の生成
-        const methodSelect = document.getElementById('method');
-        methodSelect.innerHTML = ''; // クリア
-        const methods = data.methods || ["PayPay後払い", "クレジットカード", "現金"]; // デフォルト
-        
-        methods.forEach(method => {
-            const option = document.createElement('option');
-            option.value = method;
-            option.textContent = method;
-            methodSelect.appendChild(option);
-        });
-    }
-
-    // ページ読み込み時にマスター取得
-    window.onload = fetchMasterData;
-
-    // -------------------------
-    // データ送信処理
-    // -------------------------
-    document.getElementById('kakeiboForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // カテゴリが選択されているかチェック
-        if(!document.getElementById('category').value) {
-            alert('カテゴリを選択してください！');
-            return;
-        }
-
-        const submitBtn = document.getElementById('submitBtn');
-        const spinner = document.getElementById('loadingSpinner');
-        const msgDiv = document.getElementById('message');
-
-        // UI状態変更
-        submitBtn.style.display = 'none';
-        spinner.style.display = 'block';
-        msgDiv.textContent = '';
-
-        // 送信データ作成
-        const formData = new URLSearchParams(new FormData(this));
-
-        // 送信
-        fetch('https://script.google.com/macros/s/AKfycbxB4i2wRjP1wV3yI4E7y71b562W-4R_7A/exec', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            spinner.style.display = 'none';
-            submitBtn.style.display = 'block';
-            
-            if(data.ok) {
-                msgDiv.style.color = '#32cd32';
-                msgDiv.textContent = '✨ 登録完了！お疲れ様でした ✨';
-                // フォームリセット (日付と支払方法は保持)
-                document.getElementById('amount').value = '';
-                document.getElementById('memo').value = '';
-                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
-                document.getElementById('category').value = '';
-                // iframe(ダッシュボード)を再読み込みして最新データを反映させる
-                const iframe = document.querySelector('#view-dashboard iframe');
-                if(iframe) iframe.src = iframe.src;
-            } else {
-                msgDiv.style.color = 'red';
-                msgDiv.textContent = 'エラーが発生しました💦';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            spinner.style.display = 'none';
-            submitBtn.style.display = 'block';
-            msgDiv.style.color = 'red';
-            msgDiv.textContent = '通信エラーです💦';
-        });
+    document.getElementById("f").addEventListener("submit", async (e) => {
+      e.preventDefault(); const b = document.getElementById("subBtn"); b.disabled = true;
+      const fd = new FormData(e.target); fd.set("amount", fd.get("amount").replace(/[^0-9]/g, ""));
+      const tst = document.getElementById("tst"); tst.classList.add("show");
+      await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true });
+      setTimeout(() => { tst.classList.remove("show"); }, 2500);
+      e.target.reset(); load(); b.disabled = false;
     });
-</script>
 
+    function jsonp(u) { return new Promise(r => { const c = "cb" + Date.now(); window[c] = d => { r(d); delete window[c]; s.remove(); }; const s = document.createElement("script"); s.src = `${u}&callback=${c}`; document.head.appendChild(s); }); }
+    load();
+  </script>
 </body>
 </html>
