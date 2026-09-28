@@ -17,12 +17,12 @@
       height: 100%; overflow: hidden; color: var(--ink);
     }
     *{ box-sizing: border-box; touch-action: manipulation; }
-    
+
     /* 変更点: タブバーに被らないよう padding-bottom を 80px に増やしました */
     .page { max-width: 500px; margin: 0 auto; padding: 10px 10px 80px 10px; height: 100svh; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; }
-    
+
     .header { position: relative; margin-bottom: 8px; min-height: 105px; padding: 10px 5px 0; }
-    .title-group { position: relative; z-index: 2; padding-right: 100px; } 
+    .title-group { position: relative; z-index: 2; padding-right: 100px; }
     .title-main { font-size: 24px; font-weight: 900; margin: 0; color: #555; }
     .title-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 0; font-weight: 600; line-height: 1.4; }
     .top-icon { position: absolute; right: 5px; top: 0px; width: 110px; height: 110px; object-fit: contain; opacity: 0.35; z-index: 0; pointer-events: none; }
@@ -34,19 +34,40 @@
     .budget-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: var(--accent-pink); }
     .budget-bar-bg { height: 12px; background: #f5f5f5; border-radius: 6px; overflow: hidden; margin-top: 8px; }
     .budget-bar-fill { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); width: 0%; transition: width 1s ease; }
+    .budget-sub { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; font-weight: bold; color: var(--muted); }
+    .budget-sub b { color: #10b981; font-size: 14px; }
+    .budget-sub.over b { color: var(--accent-pink); }
 
     .card { background: var(--card-bg); border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: var(--border-thick) solid #fff; backdrop-filter: blur(5px); }
     label { font-size: 10.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: bold; padding-left: 4px; white-space: nowrap; }
-    
+
     .amount-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 12px; }
     .currency { position: absolute; left: 15px; font-weight: 900; font-size: 24px; color: var(--accent-pink); }
     input[name="amount"] { padding-left: 45px !important; font-size: 28px !important; font-weight: 900; color: var(--accent-pink); border: 2px solid #ffe0ec !important; background: #fff !important; border-radius: 16px; }
 
     input, select { width: 100%; border: 1.5px solid #eee; border-radius: 14px; padding: 0 12px; height: 46px; font-size: 15px; outline: none; margin-bottom: 12px; background: #fff; }
 
+    /* 分類ボタン群 */
+    .cat-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .cat-chip { display: inline-block; margin: 0; padding: 0; font-size: inherit; cursor: pointer; }
+    .cat-chip input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; padding: 0; pointer-events: none; }
+    .cat-chip span { display: inline-block; padding: 8px 12px; border-radius: 999px; background: #fff; border: 1.5px solid #eee; font-size: 13px; font-weight: bold; color: #666; transition: .15s; }
+    .cat-chip input:checked + span { background: var(--accent-pink); border-color: var(--accent-pink); color: #fff; }
+    .cat-chip.flash span { animation: flash .6s ease; }
+    @keyframes flash { 0%{ transform: scale(1); } 40%{ transform: scale(1.12); } 100%{ transform: scale(1); } }
+
+    /* 自由記入欄の候補 */
+    .sug-row { display: flex; gap: 6px; overflow-x: auto; margin: -6px 0 12px; padding-bottom: 2px; scrollbar-width: none; }
+    .sug-row::-webkit-scrollbar { display: none; }
+    .sug-row:empty { display: none; }
+    .sug { flex: 0 0 auto; border: 1.5px dashed #ffc6dc; background: #fff; color: #777; border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
     .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 5px; }
-    .date-box { flex: 0.52; min-width: 0; } 
+    .date-box { flex: 0.52; min-width: 0; }
     .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
+    .date-quick { display: flex; gap: 6px; margin-top: 6px; }
+    .date-quick button { flex: 1; height: 30px; border-radius: 10px; border: 1.5px solid #eee; background: #fff; color: #777; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .date-quick button.on { background: #ffe0ec; border-color: #ffc6dc; color: var(--accent-pink); }
 
     .btn-group { flex: 0.48; display: flex; flex-direction: column; align-items: center; }
     .stamp-btn {
@@ -60,9 +81,17 @@
     .stamp-btn:active { transform: translateY(3px); box-shadow: 0 2px 0px rgba(255, 126, 179, 0.2); }
 
     .history-item { background: rgba(255, 255, 255, 0.7); border-radius: 18px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1.5px solid #fff; }
+    .history-item.pending { border-style: dashed; border-color: #ffc6dc; }
     .h-memo { font-weight: bold; font-size: 14px; }
     .h-sub { font-size: 10px; color: var(--muted); }
+    .h-state { font-size: 10px; font-weight: bold; color: var(--accent-pink); }
     .del-btn { color: #fff; border: none; background: #ffb5d2; border-radius: 10px; width: 32px; height: 32px; font-weight: bold; cursor: pointer; }
+
+    /* 未送信・通信状態 */
+    .sync-bar { display: none; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border-radius: 16px; background: #fff; border: 1.5px dashed #ffc6dc; font-size: 12px; font-weight: bold; color: #777; }
+    .sync-bar.show { display: flex; }
+    .sync-bar button { flex: 0 0 auto; border: none; background: var(--accent-pink); color: #fff; border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .empty-msg { text-align: center; font-size: 12px; color: var(--muted); padding: 16px 0; }
 
     .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
     .toast { background: #fff; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; display: flex; gap: 15px; align-items: center; opacity: 0; transform: translateY(20px); transition: .4s; border: 3px solid #ffdeeb; }
@@ -105,23 +134,28 @@
           <span>¥<span id="cur">0</span> / <span id="lim">0</span></span>
         </div>
         <div class="budget-bar-bg"><div class="budget-bar-fill" id="bar"></div></div>
+        <div class="budget-sub" id="budgetSub"></div>
       </div>
+
+      <div class="sync-bar" id="syncBar"><span id="syncMsg"></span><button type="button" id="syncBtn">再送する</button></div>
 
       <div class="card">
         <form id="f">
           <label>金額</label>
           <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
 
-          <div style="display:flex; gap:10px; margin-bottom:12px;">
-            <div style="flex:1.2;"><label>分類（食費等）</label><select id="category" name="category" required style="margin-bottom:0;"></select></div>
-            <div style="flex:1;"><label>支払方法</label><select id="method" name="method" required style="margin-bottom:0;"></select></div>
-          </div>
+          <label>分類（食費等）</label>
+          <div class="cat-grid" id="category"></div>
 
           <label>カテゴリ（自由記入欄）</label>
-          <input name="memo" placeholder="例：アオキ、ツルハ、鬼がらし">
+          <input name="memo" id="memo" placeholder="例：アオキ、ツルハ、鬼がらし" autocomplete="off">
+          <div class="sug-row" id="sugRow"></div>
 
           <div class="row-flex">
-            <div class="date-box"><label>日付（空欄は今日扱い）</label><input name="date" type="date"></div>
+            <div class="date-box">
+              <label>日付（空欄は今日扱い）</label><input name="date" id="date" type="date">
+              <div class="date-quick"><button type="button" data-days="0">今日</button><button type="button" data-days="1">昨日</button></div>
+            </div>
             <div class="btn-group">
               <button class="stamp-btn" type="submit" id="subBtn">
                 <span class="btn-inner-label">記録する！</span>
@@ -140,7 +174,8 @@
   </div>
 
   <div id="view-dashboard">
-    <iframe src="https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec" id="dashFrame"></iframe>
+    <!-- 分析タブは初めて開いたときに読み込む -->
+    <iframe data-src="https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec" id="dashFrame"></iframe>
   </div>
 
   <div class="bottom-tab-bar">
@@ -162,66 +197,392 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
     const messages = ["登録作業、いつもありがとう！","体調は大丈夫？しっかり寝てね","今日も一日、お疲れ様！","無理しないで、ゆっくり休んでね","いつも家計を支えてくれて感謝！","美味しいもの食べてリラックス♪","少しずつ、理想の家計へ！","明日も素敵な一日になりますように","あなたの頑張り、見てるよ","今日も100点！自分を褒めてね"];
 
-    async function load() {
-      const msgEl = document.getElementById("randomMsg");
-      msgEl.textContent = messages[Math.floor(Math.random() * messages.length)];
-      const d = await jsonp(GAS_URL + "?action=master");
-      document.getElementById("cur").textContent = Math.floor(d.budget.total).toLocaleString();
-      document.getElementById("lim").textContent = Math.floor(d.budget.limit).toLocaleString();
-      document.getElementById("bar").style.width = d.budget.percent + "%";
-      const f = (i, l) => { document.getElementById(i).innerHTML = l.map(v => `<option value="${v}">${v}</option>`).join(''); };
-      f("category", d.categories); f("method", d.methods);
-      document.getElementById("hList").innerHTML = d.history.map(h => `
-        <div class="history-item">
-          <div><div class="h-memo">${h.memo || h.category}</div><div class="h-sub">${h.date} · ${h.category}</div></div>
-          <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${h.amount.toLocaleString()}</span><button class="del-btn" onclick="del('${h.id}')">×</button></div>
-        </div>`).join('');
+    // 端末に保存するキー
+    const KEY_MASTER = "kakeibo.master.v1";   // 前回の action=master 応答
+    const KEY_OUTBOX = "kakeibo.outbox.v1";   // 未送信の記録
+    const KEY_MEMOS  = "kakeibo.memos.v1";    // 自由記入欄の候補（入力値→分類ごとの回数）
+
+    const $ = id => document.getElementById(id);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const yen = n => Math.floor(Number(n) || 0).toLocaleString();
+
+    function store(key, fallback) {
+      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+    }
+    function save(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
     }
 
-    // 削除機能の修正：FormDataを使用してPOST送信
-    window.del = async (id) => { 
-      if(!confirm("この記録を消してもいい？")) return; 
+    function ymd(d) {
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+    function newLocalId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+    }
+
+    let master = store(KEY_MASTER, null);
+    let outbox = store(KEY_OUTBOX, []);
+    let memoStats = store(KEY_MEMOS, { at: 0, memos: {} });
+    let justSent = [];      // 送信済みだが、まだ最新の master に反映されていない記録
+    let loadSeq = 0;
+    let lastLoadAt = 0;
+    let dashStale = false;
+
+    // ---------- 通信 ----------
+
+    // JSONP 1回分。タイムアウトしたら失敗扱いにし、遅れて届いた応答は捨てる
+    function jsonpOnce(url, timeoutMs) {
+      return new Promise((resolve, reject) => {
+        const cb = "cb" + Date.now() + Math.floor(Math.random() * 1e6);
+        const s = document.createElement("script");
+        let done = false;
+        const finish = () => { done = true; clearTimeout(timer); s.remove(); window[cb] = () => { delete window[cb]; }; };
+        window[cb] = d => { if (done) return; finish(); delete window[cb]; resolve(d); };
+        const timer = setTimeout(() => { if (done) return; finish(); reject(new Error("timeout")); }, timeoutMs);
+        s.onerror = () => { if (done) return; finish(); reject(new Error("network")); };
+        s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function jsonp(url, { timeout = 12000, retries = 2 } = {}) {
+      for (let i = 0; ; i++) {
+        try {
+          const d = await jsonpOnce(url, timeout);
+          if (d && d.error) throw new Error(d.error);
+          return d;
+        } catch (e) {
+          if (i >= retries) throw e;
+          await sleep(1000 * (i + 1));
+        }
+      }
+    }
+
+    async function post(fields, timeoutMs = 20000) {
       const fd = new FormData();
-      fd.append("action", "delete");
-      fd.append("rowId", id);
-      
+      Object.entries(fields).forEach(([k, v]) => fd.append(k, v ?? ""));
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
       try {
-        await fetch(GAS_URL, { method: "POST", body: fd }); 
-        load(); 
+        const res = await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true, signal: ctrl.signal });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        let j = null;
+        try { j = JSON.parse(text); } catch (e) {}
+        if (j && (j.ok === false || j.error)) throw new Error(j.error || "failed");
+        return j;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    // ---------- 表示 ----------
+
+    function renderBudget() {
+      if (!master || !master.budget) return;
+      const b = master.budget;
+      $("cur").textContent = yen(b.total);
+      $("lim").textContent = yen(b.limit);
+      $("bar").style.width = Math.min(100, Number(b.percent) || 0) + "%";
+
+      // 予算は月単位。今日を含めた当月の残り日数で割る
+      const now = new Date();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const daysLeft = lastDay - now.getDate() + 1;
+      const rest = Number(b.limit) - Number(b.total);
+      const sub = $("budgetSub");
+      sub.classList.toggle("over", rest < 0);
+      sub.innerHTML = rest >= 0
+        ? `<span>残り ${daysLeft}日</span><span>1日あたり <b>¥${yen(rest / daysLeft)}</b></span>`
+        : `<span>残り ${daysLeft}日</span><span>予算オーバー <b>¥${yen(-rest)}</b></span>`;
+    }
+
+    function renderCategories() {
+      if (!master || !Array.isArray(master.categories)) return;
+      const grid = $("category");
+      const current = selectedCategory() || master.categories[0];
+      grid.innerHTML = master.categories.map(c => `
+        <label class="cat-chip"><input type="radio" name="category" value="${esc(c)}" ${c === current ? "checked" : ""}><span>${esc(c)}</span></label>`).join("");
+    }
+
+    function selectedCategory() {
+      const r = document.querySelector('#category input[name="category"]:checked');
+      return r ? r.value : "";
+    }
+
+    function selectCategory(cat, flash) {
+      const r = [...document.querySelectorAll('#category input[name="category"]')].find(x => x.value === cat);
+      if (!r) return;
+      r.checked = true;
+      if (flash) {
+        const chip = r.closest(".cat-chip");
+        chip.classList.remove("flash"); void chip.offsetWidth; chip.classList.add("flash");
+      }
+    }
+
+    function renderHistory() {
+      const itemHtml = (h, state) => `
+        <div class="history-item${state ? " pending" : ""}">
+          <div><div class="h-memo">${esc(h.memo || h.category)}</div><div class="h-sub">${esc(h.date)} · ${esc(h.category)}${state ? ` · <span class="h-state">${state}</span>` : ""}</div></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${yen(h.amount)}</span>${state ? "" : `<button class="del-btn" onclick="del('${esc(h.id)}')">×</button>`}</div>
+        </div>`;
+      const short = r => ({ ...r, date: r.date.slice(5).replace("-", "/") });
+      const html = [
+        ...outbox.map(r => itemHtml(short(r), r.failed ? "未送信" : "送信中…")),
+        ...justSent.map(r => itemHtml(short(r), "登録済み")),
+        ...((master && master.history) || []).map(h => itemHtml(h, ""))
+      ].join("");
+      $("hList").innerHTML = html || (master ? '<div class="empty-msg">まだ記録がないよ</div>' : "");
+    }
+
+    function renderSync(loadError) {
+      const failed = outbox.filter(r => r.failed).length;
+      const bar = $("syncBar");
+      if (failed) {
+        $("syncMsg").textContent = `📮 未送信 ${failed}件（通信が戻ったら自動で送るね）`;
+        $("syncBtn").textContent = "再送する";
+        $("syncBtn").onclick = () => flush();
+        bar.classList.add("show");
+      } else if (loadError) {
+        $("syncMsg").textContent = master ? "📶 通信できないので前回のデータを表示中" : "📶 読み込みに失敗しました";
+        $("syncBtn").textContent = "再読み込み";
+        $("syncBtn").onclick = () => load();
+        bar.classList.add("show");
+      } else {
+        bar.classList.remove("show");
+      }
+    }
+
+    function renderAll() {
+      renderBudget();
+      renderCategories();
+      renderHistory();
+      renderSuggestions();
+      renderDateButtons();
+    }
+
+    // ---------- 読み込み ----------
+
+    async function load() {
+      const seq = ++loadSeq;
+      const startedAt = Date.now();
+      try {
+        const d = await jsonp(GAS_URL + "?action=master");
+        if (seq !== loadSeq) return;
+        master = d;
+        save(KEY_MASTER, d);
+        lastLoadAt = Date.now();
+        justSent = justSent.filter(r => r.sentAt >= startedAt);
+        renderAll();
+        renderSync(false);
+        loadMemoStats();
+      } catch (e) {
+        if (seq !== loadSeq) return;
+        renderSync(true);
+      }
+    }
+
+    // ---------- 自由記入欄の候補 ----------
+
+    // サーバーから「入力値→分類ごとの回数」を取得（1時間に1回まで）
+    async function loadMemoStats(force) {
+      if (!force && Date.now() - (memoStats.at || 0) < 60 * 60 * 1000) return;
+      try {
+        const d = await jsonp(GAS_URL + "?action=memos", { timeout: 15000, retries: 1 });
+        if (!d || !Array.isArray(d.memos)) return;
+        const memos = {};
+        d.memos.forEach(m => { if (m && m.m) memos[m.m] = m.cats || {}; });
+        memoStats = { at: Date.now(), memos };
+        save(KEY_MEMOS, memoStats);
+        renderSuggestions();
+      } catch (e) {}
+    }
+
+    function countMemo(memo, cat) {
+      if (!memo) return;
+      const cats = memoStats.memos[memo] || (memoStats.memos[memo] = {});
+      cats[cat] = (cats[cat] || 0) + 1;
+      save(KEY_MEMOS, memoStats);
+    }
+
+    function topCategory(memo) {
+      const cats = memoStats.memos[memo];
+      if (!cats) return "";
+      return Object.entries(cats).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+    }
+
+    function renderSuggestions() {
+      const q = $("memo").value.trim().toLowerCase();
+      const list = Object.entries(memoStats.memos)
+        .map(([m, cats]) => [m, Object.values(cats).reduce((a, b) => a + b, 0)])
+        .filter(([m]) => !q || (m.toLowerCase().includes(q) && m.toLowerCase() !== q))
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 12);
+      $("sugRow").innerHTML = list.map(([m]) => `<button type="button" class="sug" data-memo="${esc(m)}">${esc(m)}</button>`).join("");
+    }
+
+    $("memo").addEventListener("input", renderSuggestions);
+    $("sugRow").addEventListener("click", e => {
+      const b = e.target.closest(".sug");
+      if (!b) return;
+      const memo = b.dataset.memo;
+      $("memo").value = memo;
+      const cat = topCategory(memo);
+      if (cat) selectCategory(cat, true);
+      renderSuggestions();
+    });
+
+    // ---------- 日付 ----------
+
+    function renderDateButtons() {
+      const v = $("date").value;
+      const today = ymd(new Date());
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      document.querySelectorAll(".date-quick button").forEach(b => {
+        const target = b.dataset.days === "0" ? today : ymd(y);
+        b.classList.toggle("on", (v || today) === target);
+      });
+    }
+    document.querySelectorAll(".date-quick button").forEach(b => b.addEventListener("click", () => {
+      const d = new Date(); d.setDate(d.getDate() - Number(b.dataset.days));
+      $("date").value = ymd(d);
+      renderDateButtons();
+    }));
+    $("date").addEventListener("change", renderDateButtons);
+
+    // ---------- 登録（端末に保存してから非同期で送信） ----------
+
+    $("f").addEventListener("submit", e => {
+      e.preventDefault();
+      const b = $("subBtn");
+      b.disabled = true;
+      setTimeout(() => { b.disabled = false; }, 400);
+
+      const amount = $("f").amount.value.replace(/[^0-9]/g, "");
+      if (!amount) return;
+      const rec = {
+        localId: newLocalId(),
+        amount: Number(amount),
+        category: selectedCategory(),
+        memo: $("memo").value.trim(),
+        // 後で再送されても日付がずれないよう、空欄なら記録した日の日付を入れておく
+        date: $("date").value || ymd(new Date())
+      };
+      outbox.push(rec);
+      save(KEY_OUTBOX, outbox);
+      countMemo(rec.memo, rec.category);
+
+      const cat = rec.category;
+      e.target.reset();
+      selectCategory(cat);
+      renderHistory();
+      renderSuggestions();
+      renderDateButtons();
+      flush();
+    });
+
+    let flushing = false;
+    async function flush() {
+      if (flushing || !outbox.length) return;
+      flushing = true;
+      let sentAny = false;
+      try {
+        // 送信中に追加された記録も続けて送る
+        while (outbox.length) {
+          const rec = outbox[0];
+          rec.failed = false;
+          renderHistory();
+          try {
+            await post({ localId: rec.localId, amount: rec.amount, category: rec.category, method: "", memo: rec.memo, date: rec.date });
+            outbox = outbox.filter(r => r.localId !== rec.localId);
+            save(KEY_OUTBOX, outbox);
+            justSent.unshift({ ...rec, sentAt: Date.now() });
+            sentAny = true;
+            showToast();
+          } catch (err) {
+            // 通信が不調なら残りは次の機会にまとめて送る
+            outbox.forEach(r => { r.failed = true; });
+            save(KEY_OUTBOX, outbox);
+            break;
+          }
+        }
+      } finally {
+        flushing = false;
+        renderHistory();
+        renderSync(false);
+      }
+      if (sentAny) {
+        dashStale = true;
+        load();
+      }
+    }
+
+    let toastTimer;
+    function showToast() {
+      const tst = $("tst");
+      tst.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => tst.classList.remove("show"), 2500);
+    }
+
+    // ---------- 削除 ----------
+
+    window.del = async (id) => {
+      if (!confirm("この記録を消してもいい？")) return;
+      if (master && master.history) {
+        master.history = master.history.filter(h => String(h.id) !== String(id));
+        renderHistory();
+      }
+      try {
+        await post({ action: "delete", rowId: id });
+        dashStale = true;
       } catch (e) {
         alert("削除に失敗しました。");
       }
+      load();
     };
 
-    document.getElementById("f").addEventListener("submit", async (e) => {
-      e.preventDefault(); const b = document.getElementById("subBtn"); b.disabled = true;
-      const fd = new FormData(e.target); fd.set("amount", fd.get("amount").replace(/[^0-9]/g, ""));
-      const tst = document.getElementById("tst"); tst.classList.add("show");
-      await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true });
-      setTimeout(() => { tst.classList.remove("show"); }, 2500);
-      e.target.reset(); load(); b.disabled = false;
-      // 登録完了時、裏側でダッシュボードも最新状態に更新する
-      document.getElementById('dashFrame').src = document.getElementById('dashFrame').src;
-    });
+    // ---------- タブ切り替え ----------
 
-    function jsonp(u) { return new Promise(r => { const c = "cb" + Date.now(); window[c] = d => { r(d); delete window[c]; s.remove(); }; const s = document.createElement("script"); s.src = `${u}&callback=${c}`; document.head.appendChild(s); }); }
-    
-    // ▼ 追加：タブ切り替え処理 ▼
     window.switchTab = function(target) {
       if(target === 'input') {
-        document.getElementById('view-input').style.display = 'block';
-        document.getElementById('view-dashboard').style.display = 'none';
-        document.getElementById('tab-input').classList.add('active');
-        document.getElementById('tab-dashboard').classList.remove('active');
+        $('view-input').style.display = 'block';
+        $('view-dashboard').style.display = 'none';
+        $('tab-input').classList.add('active');
+        $('tab-dashboard').classList.remove('active');
       } else {
-        document.getElementById('view-input').style.display = 'none';
-        document.getElementById('view-dashboard').style.display = 'block';
-        document.getElementById('tab-input').classList.remove('active');
-        document.getElementById('tab-dashboard').classList.add('active');
+        const frame = $('dashFrame');
+        if (!frame.getAttribute('src') || dashStale) {
+          frame.src = frame.dataset.src;
+          dashStale = false;
+        }
+        $('view-input').style.display = 'none';
+        $('view-dashboard').style.display = 'block';
+        $('tab-input').classList.remove('active');
+        $('tab-dashboard').classList.add('active');
       }
     };
 
+    // ---------- 起動 ----------
+
+    $("randomMsg").textContent = messages[Math.floor(Math.random() * messages.length)];
+    outbox.forEach(r => { r.failed = true; });  // 前回送れなかった分
+    renderAll();
+    renderSync(false);
     load();
+    flush();
+
+    window.addEventListener("online", () => { flush(); load(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      flush();
+      if (Date.now() - lastLoadAt > 60 * 1000) load();
+      renderBudget();
+      renderDateButtons();
+    });
+    setInterval(() => { if (outbox.some(r => r.failed)) flush(); }, 30 * 1000);
   </script>
 </body>
 </html>
