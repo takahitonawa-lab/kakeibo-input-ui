@@ -47,29 +47,39 @@
 
     input, select { width: 100%; border: 1.5px solid #eee; border-radius: 14px; padding: 0 12px; height: 46px; font-size: 15px; outline: none; margin-bottom: 12px; background: #fff; }
 
-    /* 分類ボタン群 */
-    .cat-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-    .cat-chip { display: inline-block; margin: 0; padding: 0; font-size: inherit; cursor: pointer; }
+    /* 分類ボタン群（2行） */
+    .cat-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .cat-row { display: flex; gap: 6px; }
+    .cat-chip { flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; font-size: inherit; cursor: pointer; }
     .cat-chip input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; padding: 0; pointer-events: none; }
-    .cat-chip span { display: inline-block; padding: 8px 12px; border-radius: 999px; background: #fff; border: 1.5px solid #eee; font-size: 13px; font-weight: bold; color: #666; transition: .15s; }
+    .cat-chip span { display: block; text-align: center; white-space: nowrap; padding: 9px 6px; border-radius: 999px; background: #fff; border: 1.5px solid #eee; font-size: 12.5px; font-weight: bold; color: #666; transition: .15s; }
     .cat-chip input:checked + span { background: var(--accent-pink); border-color: var(--accent-pink); color: #fff; }
+    @media (max-width: 360px) {
+      .cat-row { gap: 4px; }
+      .cat-chip span { padding: 9px 3px; font-size: 12px; }
+    }
     .cat-chip.flash span { animation: flash .6s ease; }
     @keyframes flash { 0%{ transform: scale(1); } 40%{ transform: scale(1.12); } 100%{ transform: scale(1); } }
 
-    /* 自由記入欄の候補 */
-    .sug-row { display: flex; gap: 6px; overflow-x: auto; margin: -6px 0 12px; padding-bottom: 2px; scrollbar-width: none; }
-    .sug-row::-webkit-scrollbar { display: none; }
-    .sug-row:empty { display: none; }
-    .sug { flex: 0 0 auto; border: 1.5px dashed #ffc6dc; background: #fff; color: #777; border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    /* 自由記入欄の予測候補 */
+    .memo-wrap { position: relative; }
+    .ac-list { display: none; position: absolute; left: 0; right: 0; top: 50px; z-index: 20; background: #fff; border: 1.5px solid #ffe0ec; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
+    .ac-list.show { display: block; }
+    .ac-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 14px; font-size: 14px; font-weight: bold; color: #555; cursor: pointer; }
+    .ac-item + .ac-item { border-top: 1px solid #fff0f5; }
+    .ac-item:active { background: #fff0f5; }
+    .ac-item small { flex: 0 0 auto; font-size: 11px; color: var(--muted); }
 
-    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 5px; }
-    .date-box { flex: 0.52; min-width: 0; }
-    .date-box input { margin-bottom: 0; font-size: 14px; border-color: #f0f0f0; }
-    .date-quick { display: flex; gap: 6px; margin-top: 6px; }
-    .date-quick button { flex: 1; height: 30px; border-radius: 10px; border: 1.5px solid #eee; background: #fff; color: #777; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .row-flex { display: flex; gap: 12px; align-items: flex-end; margin-top: 2px; }
+    .date-box { flex: 1; min-width: 0; }
+    .date-quick { display: flex; gap: 8px; margin-bottom: 8px; }
+    .date-quick button { flex: 1; min-width: 0; height: 38px; border-radius: 12px; border: 1.5px solid #eee; background: #fff; color: #777; font-size: 13px; font-weight: bold; cursor: pointer; }
     .date-quick button.on { background: #ffe0ec; border-color: #ffc6dc; color: var(--accent-pink); }
+    /* iOS の日付欄は width を無視するので見た目をリセットして横幅を揃える */
+    .date-box input[type="date"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; height: 38px; margin: 0; border-radius: 12px; border-color: #eee; font-size: 14px; text-align: left; background: #fff; color: var(--ink); }
+    .date-box input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 
-    .btn-group { flex: 0.48; display: flex; flex-direction: column; align-items: center; }
+    .btn-group { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
     .stamp-btn {
       width: var(--stamp-size); height: var(--stamp-size); border-radius: 22px;
       border: 3px solid #fff; background: linear-gradient(135deg, #ffbdc0, #fecfef);
@@ -92,6 +102,8 @@
     .sync-bar.show { display: flex; }
     .sync-bar button { flex: 0 0 auto; border: none; background: var(--accent-pink); color: #fff; border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
     .empty-msg { text-align: center; font-size: 12px; color: var(--muted); padding: 16px 0; }
+    .more-btn { display: block; width: 100%; height: 42px; margin-top: 4px; border-radius: 16px; border: 1.5px solid #fff; background: rgba(255, 255, 255, 0.7); color: var(--accent-pink); font-size: 13px; font-weight: bold; cursor: pointer; }
+    .more-btn[hidden] { display: none; }
 
     .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
     .toast { background: #fff; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; display: flex; gap: 15px; align-items: center; opacity: 0; transform: translateY(20px); transition: .4s; border: 3px solid #ffdeeb; }
@@ -148,13 +160,16 @@
           <div class="cat-grid" id="category"></div>
 
           <label>カテゴリ（自由記入欄）</label>
-          <input name="memo" id="memo" placeholder="例：アオキ、ツルハ、鬼がらし" autocomplete="off">
-          <div class="sug-row" id="sugRow"></div>
+          <div class="memo-wrap">
+            <input name="memo" id="memo" placeholder="例：アオキ、ツルハ、鬼がらし" autocomplete="off">
+            <div class="ac-list" id="acList"></div>
+          </div>
 
           <div class="row-flex">
             <div class="date-box">
-              <label>日付（空欄は今日扱い）</label><input name="date" id="date" type="date">
+              <label>日付（空欄は今日扱い）</label>
               <div class="date-quick"><button type="button" data-days="0">今日</button><button type="button" data-days="1">昨日</button></div>
+              <input name="date" id="date" type="date">
             </div>
             <div class="btn-group">
               <button class="stamp-btn" type="submit" id="subBtn">
@@ -169,6 +184,7 @@
       <div style="margin-top:20px; padding-bottom: 40px;">
         <div style="font-size:13px; font-weight:bold; color:var(--muted); margin-bottom:10px; padding-left:10px;">最近の記録</div>
         <div id="hList"></div>
+        <button type="button" class="more-btn" id="moreBtn" hidden>さらに表示</button>
       </div>
     </div>
   </div>
@@ -200,7 +216,8 @@
     // 端末に保存するキー
     const KEY_MASTER = "kakeibo.master.v1";   // 前回の action=master 応答
     const KEY_OUTBOX = "kakeibo.outbox.v1";   // 未送信の記録
-    const KEY_MEMOS  = "kakeibo.memos.v1";    // 自由記入欄の候補（入力値→分類ごとの回数）
+    const KEY_MEMOS  = "kakeibo.memos.v2";    // 自由記入欄の候補（入力値→分類ごとの回数）
+    const HISTORY_PAGE = 10;
 
     const $ = id => document.getElementById(id);
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -226,6 +243,9 @@
     let outbox = store(KEY_OUTBOX, []);
     let memoStats = store(KEY_MEMOS, { at: 0, memos: {} });
     let justSent = [];      // 送信済みだが、まだ最新の master に反映されていない記録
+    let olderHistory = [];  // 「さらに表示」で追加読み込みした記録
+    let historyEnd = false; // これ以上古い記録がない
+    let loadingMore = false;
     let loadSeq = 0;
     let lastLoadAt = 0;
     let dashStale = false;
@@ -299,12 +319,16 @@
         : `<span>残り ${daysLeft}日</span><span>予算オーバー <b>¥${yen(-rest)}</b></span>`;
     }
 
+    // 分類ボタンは2行に分けて並べる
     function renderCategories() {
-      if (!master || !Array.isArray(master.categories)) return;
-      const grid = $("category");
-      const current = selectedCategory() || master.categories[0];
-      grid.innerHTML = master.categories.map(c => `
-        <label class="cat-chip"><input type="radio" name="category" value="${esc(c)}" ${c === current ? "checked" : ""}><span>${esc(c)}</span></label>`).join("");
+      const cats = (master && master.categories) || [];
+      if (!cats.length) return;
+      const current = cats.includes(selectedCategory()) ? selectedCategory() : cats[0];
+      const chip = c => `<label class="cat-chip"><input type="radio" name="category" value="${esc(c)}" ${c === current ? "checked" : ""}><span>${esc(c)}</span></label>`;
+      const half = Math.ceil(cats.length / 2);
+      $("category").innerHTML = [cats.slice(0, half), cats.slice(half)]
+        .filter(row => row.length)
+        .map(row => `<div class="cat-row">${row.map(chip).join("")}</div>`).join("");
     }
 
     function selectedCategory() {
@@ -332,10 +356,45 @@
       const html = [
         ...outbox.map(r => itemHtml(short(r), r.failed ? "未送信" : "送信中…")),
         ...justSent.map(r => itemHtml(short(r), "登録済み")),
-        ...((master && master.history) || []).map(h => itemHtml(h, ""))
+        ...serverHistory().map(h => itemHtml(h, ""))
       ].join("");
       $("hList").innerHTML = html || (master ? '<div class="empty-msg">まだ記録がないよ</div>' : "");
+      $("moreBtn").hidden = !master || historyEnd || ((master.history || []).length < HISTORY_PAGE);
     }
+
+    // 最新の記録＋追加読み込み分（登録や削除で位置がずれても同じ記録を二重に出さない）
+    function serverHistory() {
+      const seen = new Set();
+      return [...((master && master.history) || []), ...olderHistory].filter(h => {
+        const k = String(h.id);
+        if (h.id !== "" && seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }
+
+    async function loadMoreHistory() {
+      if (loadingMore) return;
+      loadingMore = true;
+      const btn = $("moreBtn");
+      btn.disabled = true;
+      btn.textContent = "読み込み中…";
+      try {
+        const offset = serverHistory().length;
+        const d = await jsonp(`${GAS_URL}?action=history&offset=${offset}&limit=${HISTORY_PAGE}`);
+        const items = (d && d.history) || [];
+        olderHistory.push(...items);
+        if (items.length < HISTORY_PAGE) historyEnd = true;
+      } catch (e) {
+        alert("読み込みに失敗しました。もう一度押してね。");
+      } finally {
+        loadingMore = false;
+        btn.disabled = false;
+        btn.textContent = "さらに表示";
+        renderHistory();
+      }
+    }
+    $("moreBtn").addEventListener("click", loadMoreHistory);
 
     function renderSync(loadError) {
       const failed = outbox.filter(r => r.failed).length;
@@ -359,7 +418,6 @@
       renderBudget();
       renderCategories();
       renderHistory();
-      renderSuggestions();
       renderDateButtons();
     }
 
@@ -375,6 +433,9 @@
         save(KEY_MASTER, d);
         lastLoadAt = Date.now();
         justSent = justSent.filter(r => r.sentAt >= startedAt);
+        // 最新分が入れ替わると追加分との境目がずれるので、追加分は畳んで最初の10件に戻す
+        olderHistory = [];
+        historyEnd = false;
         renderAll();
         renderSync(false);
         loadMemoStats();
@@ -396,7 +457,6 @@
         d.memos.forEach(m => { if (m && m.m) memos[m.m] = m.cats || {}; });
         memoStats = { at: Date.now(), memos };
         save(KEY_MEMOS, memoStats);
-        renderSuggestions();
       } catch (e) {}
     }
 
@@ -407,31 +467,52 @@
       save(KEY_MEMOS, memoStats);
     }
 
+    // 今ある分類ボタンの中で、その入力値に最も多く使われた分類
     function topCategory(memo) {
       const cats = memoStats.memos[memo];
+      const current = (master && master.categories) || [];
       if (!cats) return "";
-      return Object.entries(cats).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+      return Object.entries(cats).filter(([c]) => current.includes(c)).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
     }
 
-    function renderSuggestions() {
-      const q = $("memo").value.trim().toLowerCase();
-      const list = Object.entries(memoStats.memos)
-        .map(([m, cats]) => [m, Object.values(cats).reduce((a, b) => a + b, 0)])
-        .filter(([m]) => !q || (m.toLowerCase().includes(q) && m.toLowerCase() !== q))
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12);
-      $("sugRow").innerHTML = list.map(([m]) => `<button type="button" class="sug" data-memo="${esc(m)}">${esc(m)}</button>`).join("");
+    // ひらがな・カタカナ・全角半角・大文字小文字の違いを無視して比べる
+    const normalize = s => String(s).normalize("NFKC").toLowerCase()
+      .replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+
+    // 入力中の文字で始まるものを優先し、次に含むものを、よく使う順に最大6件
+    function renderAutocomplete() {
+      const list = $("acList");
+      const q = normalize($("memo").value.trim());
+      if (!q || document.activeElement !== $("memo")) { list.classList.remove("show"); return; }
+      const scored = Object.entries(memoStats.memos).map(([m, cats]) => {
+        const n = normalize(m);
+        const rank = n.startsWith(q) ? 0 : n.includes(q) ? 1 : -1;
+        return { m, rank, count: Object.values(cats).reduce((a, b) => a + b, 0) };
+      }).filter(x => x.rank >= 0)
+        .sort((a, b) => a.rank - b.rank || b.count - a.count)
+        .slice(0, 6);
+      list.innerHTML = scored.map(x => {
+        const cat = topCategory(x.m);
+        return `<div class="ac-item" data-memo="${esc(x.m)}"><span>${esc(x.m)}</span>${cat ? `<small>${esc(cat)}</small>` : ""}</div>`;
+      }).join("");
+      list.classList.toggle("show", scored.length > 0);
     }
 
-    $("memo").addEventListener("input", renderSuggestions);
-    $("sugRow").addEventListener("click", e => {
-      const b = e.target.closest(".sug");
-      if (!b) return;
-      const memo = b.dataset.memo;
+    $("memo").addEventListener("input", renderAutocomplete);
+    $("memo").addEventListener("compositionupdate", () => setTimeout(renderAutocomplete, 0));
+    $("memo").addEventListener("focus", renderAutocomplete);
+    $("memo").addEventListener("blur", () => setTimeout(() => $("acList").classList.remove("show"), 150));
+    // 候補をタップしても入力欄のフォーカスが外れないようにする
+    $("acList").addEventListener("pointerdown", e => e.preventDefault());
+    $("acList").addEventListener("click", e => {
+      const item = e.target.closest(".ac-item");
+      if (!item) return;
+      const memo = item.dataset.memo;
       $("memo").value = memo;
       const cat = topCategory(memo);
       if (cat) selectCategory(cat, true);
-      renderSuggestions();
+      $("acList").classList.remove("show");
+      $("memo").blur();
     });
 
     // ---------- 日付 ----------
@@ -477,8 +558,8 @@
       const cat = rec.category;
       e.target.reset();
       selectCategory(cat);
+      $("acList").classList.remove("show");
       renderHistory();
-      renderSuggestions();
       renderDateButtons();
       flush();
     });
@@ -533,6 +614,7 @@
       if (!confirm("この記録を消してもいい？")) return;
       if (master && master.history) {
         master.history = master.history.filter(h => String(h.id) !== String(id));
+        olderHistory = olderHistory.filter(h => String(h.id) !== String(id));
         renderHistory();
       }
       try {
