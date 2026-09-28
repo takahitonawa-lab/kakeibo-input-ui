@@ -76,8 +76,8 @@
     .date-quick button { flex: 1; min-width: 0; height: 38px; border-radius: 12px; border: 1.5px solid #eee; background: #fff; color: #777; font-size: 13px; font-weight: bold; cursor: pointer; }
     .date-quick button.on { background: #ffe0ec; border-color: #ffc6dc; color: var(--accent-pink); }
     /* iOS の日付欄は width を無視するので見た目をリセットして横幅を揃える */
-    .date-box input[type="date"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; height: 38px; margin: 0; border-radius: 12px; border-color: #eee; font-size: 14px; text-align: left; background: #fff; color: var(--ink); }
-    .date-box input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+    input[type="date"].date-input { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; height: 38px; margin: 0; border-radius: 12px; border-color: #eee; font-size: 14px; text-align: left; background: #fff; color: var(--ink); }
+    input[type="date"].date-input::-webkit-date-and-time-value { text-align: left; }
 
     .btn-group { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
     .stamp-btn {
@@ -92,6 +92,10 @@
 
     .history-item { background: rgba(255, 255, 255, 0.7); border-radius: 18px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1.5px solid #fff; }
     .history-item.pending { border-style: dashed; border-color: #ffc6dc; }
+    .history-item.tappable { cursor: pointer; transition: background .15s; }
+    .history-item.tappable:active { background: #fff; }
+    .section-title { font-size: 13px; font-weight: bold; color: var(--muted); margin-bottom: 10px; padding-left: 10px; }
+    .section-title small { font-size: 10.5px; font-weight: bold; color: #b8a8b8; margin-left: 4px; }
     .h-memo { font-weight: bold; font-size: 14px; }
     .h-sub { font-size: 10px; color: var(--muted); }
     .h-state { font-size: 10px; font-weight: bold; color: var(--accent-pink); }
@@ -105,7 +109,24 @@
     .more-btn { display: block; width: 100%; height: 42px; margin-top: 4px; border-radius: 16px; border: 1.5px solid #fff; background: rgba(255, 255, 255, 0.7); color: var(--accent-pink); font-size: 13px; font-weight: bold; cursor: pointer; }
     .more-btn[hidden] { display: none; }
 
-    .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 999; }
+    /* 記録の修正パネル（下から出るシート） */
+    .sheet-backdrop { position: fixed; inset: 0; background: rgba(70, 50, 70, 0.35); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 1100; }
+    .sheet-backdrop.show { opacity: 1; pointer-events: auto; }
+    .sheet { position: fixed; left: 50%; bottom: 0; width: 100%; max-width: 500px; max-height: 92svh; overflow-y: auto; transform: translate(-50%, 105%); transition: transform .3s ease; z-index: 1101; visibility: hidden;
+      background: linear-gradient(135deg, var(--bg-pink) 0%, var(--bg-purple) 100%); border-radius: 26px 26px 0 0; padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 30px rgba(0,0,0,0.08); }
+    .sheet.show { transform: translate(-50%, 0); visibility: visible; }
+    .sheet-grip { width: 42px; height: 5px; border-radius: 3px; background: #e8d6e2; margin: 0 auto 10px; }
+    .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .sheet-title { font-size: 17px; font-weight: 900; color: #555; }
+    .sheet-close { border: none; background: #fff; width: 34px; height: 34px; border-radius: 12px; font-size: 16px; font-weight: bold; color: #aaa; cursor: pointer; }
+    .sheet .card { padding: 16px; }
+    .sheet-actions { display: flex; gap: 10px; margin-top: 14px; }
+    .sheet-del { flex: 0 0 auto; height: 48px; padding: 0 18px; border-radius: 16px; border: 1.5px solid #ffc6dc; background: #fff; color: var(--accent-pink); font-size: 14px; font-weight: bold; cursor: pointer; }
+    .sheet-save { flex: 1; height: 48px; border-radius: 16px; border: none; background: linear-gradient(135deg, #ff9ac4, var(--accent-pink)); color: #fff; font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 rgba(255, 126, 179, 0.25); }
+    .sheet-save:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(255, 126, 179, 0.25); }
+    .sheet-save:disabled, .sheet-del:disabled { opacity: .6; }
+
+    .toastWrap { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 1200; }
     .toast { background: #fff; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; display: flex; gap: 15px; align-items: center; opacity: 0; transform: translateY(20px); transition: .4s; border: 3px solid #ffdeeb; }
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast img { width: 70px; height: 70px; object-fit: contain; }
@@ -168,8 +189,8 @@
           <div class="row-flex">
             <div class="date-box">
               <label>日付（空欄は今日扱い）</label>
-              <div class="date-quick"><button type="button" data-days="0">今日</button><button type="button" data-days="1">昨日</button></div>
-              <input name="date" id="date" type="date">
+              <div class="date-quick" data-target="date"><button type="button" data-days="0">今日</button><button type="button" data-days="1">昨日</button></div>
+              <input name="date" id="date" type="date" class="date-input">
             </div>
             <div class="btn-group">
               <button class="stamp-btn" type="submit" id="subBtn">
@@ -182,7 +203,7 @@
       </div>
 
       <div style="margin-top:20px; padding-bottom: 40px;">
-        <div style="font-size:13px; font-weight:bold; color:var(--muted); margin-bottom:10px; padding-left:10px;">最近の記録</div>
+        <div class="section-title">最近の記録<small>タップで修正できるよ</small></div>
         <div id="hList"></div>
         <button type="button" class="more-btn" id="moreBtn" hidden>さらに表示</button>
       </div>
@@ -207,7 +228,36 @@
     </div>
   </div>
 
-  <div class="toastWrap"><div class="toast" id="tst"><img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'"><div><div style="font-weight:900; font-size:20px; color:var(--accent-pink);">登録完了！</div><div style="font-size:12px; color:#a0a0b0;">家計簿を更新したよ♪</div></div></div></div>
+  <!-- 記録の修正パネル -->
+  <div class="sheet-backdrop" id="editBackdrop"></div>
+  <div class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><span class="sheet-title" id="editTitle">記録を修正</span><button type="button" class="sheet-close" id="editClose" aria-label="閉じる">✕</button></div>
+    <form id="ef" class="card" autocomplete="off">
+      <label>金額</label>
+      <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" id="eAmount" type="tel" inputmode="numeric" placeholder="0" required></div>
+
+      <label>分類（食費等）</label>
+      <div class="cat-grid" id="eCategory"></div>
+
+      <label>カテゴリ（自由記入欄）</label>
+      <div class="memo-wrap">
+        <input id="eMemo" placeholder="例：アオキ、ツルハ、鬼がらし" autocomplete="off">
+        <div class="ac-list" id="eAcList"></div>
+      </div>
+
+      <label>日付</label>
+      <div class="date-quick" data-target="eDate"><button type="button" data-days="0">今日</button><button type="button" data-days="1">昨日</button></div>
+      <input id="eDate" type="date" class="date-input" required>
+
+      <div class="sheet-actions">
+        <button type="button" class="sheet-del" id="editDelete">削除</button>
+        <button type="submit" class="sheet-save" id="editSave">保存する</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toastWrap"><div class="toast" id="tst"><img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'"><div><div id="tstTitle" style="font-weight:900; font-size:20px; color:var(--accent-pink);">登録完了！</div><div id="tstSub" style="font-size:12px; color:#a0a0b0;">家計簿を更新したよ♪</div></div></div></div>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
@@ -319,25 +369,29 @@
         : `<span>残り ${daysLeft}日</span><span>予算オーバー <b>¥${yen(-rest)}</b></span>`;
     }
 
-    // 分類ボタンは2行に分けて並べる
-    function renderCategories() {
-      const cats = (master && master.categories) || [];
-      if (!cats.length) return;
-      const current = cats.includes(selectedCategory()) ? selectedCategory() : cats[0];
-      const chip = c => `<label class="cat-chip"><input type="radio" name="category" value="${esc(c)}" ${c === current ? "checked" : ""}><span>${esc(c)}</span></label>`;
+    // 分類ボタンは2行に分けて並べる（grid は入力欄なら "category"、修正パネルなら "eCategory"）
+    function renderCategoryChips(grid, cats, current) {
+      const chip = c => `<label class="cat-chip"><input type="radio" name="${grid}" value="${esc(c)}" ${c === current ? "checked" : ""}><span>${esc(c)}</span></label>`;
       const half = Math.ceil(cats.length / 2);
-      $("category").innerHTML = [cats.slice(0, half), cats.slice(half)]
+      $(grid).innerHTML = [cats.slice(0, half), cats.slice(half)]
         .filter(row => row.length)
         .map(row => `<div class="cat-row">${row.map(chip).join("")}</div>`).join("");
     }
 
-    function selectedCategory() {
-      const r = document.querySelector('#category input[name="category"]:checked');
+    function renderCategories() {
+      const cats = (master && master.categories) || [];
+      if (!cats.length) return;
+      const current = cats.includes(selectedCategory()) ? selectedCategory() : cats[0];
+      renderCategoryChips("category", cats, current);
+    }
+
+    function selectedCategory(grid = "category") {
+      const r = document.querySelector(`#${grid} input[name="${grid}"]:checked`);
       return r ? r.value : "";
     }
 
-    function selectCategory(cat, flash) {
-      const r = [...document.querySelectorAll('#category input[name="category"]')].find(x => x.value === cat);
+    function selectCategory(cat, flash, grid = "category") {
+      const r = [...document.querySelectorAll(`#${grid} input[name="${grid}"]`)].find(x => x.value === cat);
       if (!r) return;
       r.checked = true;
       if (flash) {
@@ -347,11 +401,15 @@
     }
 
     function renderHistory() {
-      const itemHtml = (h, state) => `
-        <div class="history-item${state ? " pending" : ""}">
+      // シートにある記録（IDあり）はタップで修正できる
+      const itemHtml = (h, state) => {
+        const editable = !state && h.id !== "" && h.id != null;
+        return `
+        <div class="history-item${state ? " pending" : ""}${editable ? " tappable" : ""}"${editable ? ` data-id="${esc(h.id)}"` : ""}>
           <div><div class="h-memo">${esc(h.memo || h.category)}</div><div class="h-sub">${esc(h.date)} · ${esc(h.category)}${state ? ` · <span class="h-state">${state}</span>` : ""}</div></div>
-          <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${yen(h.amount)}</span>${state ? "" : `<button class="del-btn" onclick="del('${esc(h.id)}')">×</button>`}</div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:900; font-size:16px; color:var(--accent-pink);">¥${yen(h.amount)}</span>${editable ? `<button type="button" class="del-btn" data-del="${esc(h.id)}" aria-label="削除">×</button>` : ""}</div>
         </div>`;
+      };
       const short = r => ({ ...r, date: r.date.slice(5).replace("-", "/") });
       const html = [
         ...outbox.map(r => itemHtml(short(r), r.failed ? "未送信" : "送信中…")),
@@ -396,6 +454,13 @@
     }
     $("moreBtn").addEventListener("click", loadMoreHistory);
 
+    $("hList").addEventListener("click", e => {
+      const delBtn = e.target.closest("[data-del]");
+      if (delBtn) { del(delBtn.dataset.del); return; }
+      const item = e.target.closest(".history-item[data-id]");
+      if (item) openEditor(item.dataset.id);
+    });
+
     function renderSync(loadError) {
       const failed = outbox.filter(r => r.failed).length;
       const bar = $("syncBar");
@@ -423,7 +488,8 @@
 
     // ---------- 読み込み ----------
 
-    async function load() {
+    // keepOlder: 修正のように記録の並びが変わらない場合は、追加読み込み分を畳まない
+    async function load({ keepOlder = false } = {}) {
       const seq = ++loadSeq;
       const startedAt = Date.now();
       try {
@@ -434,8 +500,10 @@
         lastLoadAt = Date.now();
         justSent = justSent.filter(r => r.sentAt >= startedAt);
         // 最新分が入れ替わると追加分との境目がずれるので、追加分は畳んで最初の10件に戻す
-        olderHistory = [];
-        historyEnd = false;
+        if (!keepOlder) {
+          olderHistory = [];
+          historyEnd = false;
+        }
         renderAll();
         renderSync(false);
         loadMemoStats();
@@ -480,10 +548,9 @@
       .replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
 
     // 入力中の文字で始まるものを優先し、次に含むものを、よく使う順に最大6件
-    function renderAutocomplete() {
-      const list = $("acList");
-      const q = normalize($("memo").value.trim());
-      if (!q || document.activeElement !== $("memo")) { list.classList.remove("show"); return; }
+    function renderAutocomplete(input, list) {
+      const q = normalize(input.value.trim());
+      if (!q || document.activeElement !== input) { list.classList.remove("show"); return; }
       const scored = Object.entries(memoStats.memos).map(([m, cats]) => {
         const n = normalize(m);
         const rank = n.startsWith(q) ? 0 : n.includes(q) ? 1 : -1;
@@ -498,40 +565,50 @@
       list.classList.toggle("show", scored.length > 0);
     }
 
-    $("memo").addEventListener("input", renderAutocomplete);
-    $("memo").addEventListener("compositionupdate", () => setTimeout(renderAutocomplete, 0));
-    $("memo").addEventListener("focus", renderAutocomplete);
-    $("memo").addEventListener("blur", () => setTimeout(() => $("acList").classList.remove("show"), 150));
-    // 候補をタップしても入力欄のフォーカスが外れないようにする
-    $("acList").addEventListener("pointerdown", e => e.preventDefault());
-    $("acList").addEventListener("click", e => {
-      const item = e.target.closest(".ac-item");
-      if (!item) return;
-      const memo = item.dataset.memo;
-      $("memo").value = memo;
-      const cat = topCategory(memo);
-      if (cat) selectCategory(cat, true);
-      $("acList").classList.remove("show");
-      $("memo").blur();
-    });
+    // 自由記入欄に予測候補をつける。候補を選ぶと、よく使う分類を grid で選ぶ
+    function attachAutocomplete(input, list, grid) {
+      const render = () => renderAutocomplete(input, list);
+      input.addEventListener("input", render);
+      input.addEventListener("compositionupdate", () => setTimeout(render, 0));
+      input.addEventListener("focus", render);
+      input.addEventListener("blur", () => setTimeout(() => list.classList.remove("show"), 150));
+      // 候補をタップしても入力欄のフォーカスが外れないようにする
+      list.addEventListener("pointerdown", e => e.preventDefault());
+      list.addEventListener("click", e => {
+        const item = e.target.closest(".ac-item");
+        if (!item) return;
+        const memo = item.dataset.memo;
+        input.value = memo;
+        const cat = topCategory(memo);
+        if (cat) selectCategory(cat, true, grid);
+        list.classList.remove("show");
+        input.blur();
+      });
+    }
+    attachAutocomplete($("memo"), $("acList"), "category");
+    attachAutocomplete($("eMemo"), $("eAcList"), "eCategory");
 
     // ---------- 日付 ----------
 
+    // 「今日」「昨日」ボタンの選択状態。入力欄の日付は空欄なら今日扱い
     function renderDateButtons() {
-      const v = $("date").value;
       const today = ymd(new Date());
       const y = new Date(); y.setDate(y.getDate() - 1);
-      document.querySelectorAll(".date-quick button").forEach(b => {
-        const target = b.dataset.days === "0" ? today : ymd(y);
-        b.classList.toggle("on", (v || today) === target);
+      document.querySelectorAll(".date-quick").forEach(group => {
+        const v = $(group.dataset.target).value || (group.dataset.target === "date" ? today : "");
+        group.querySelectorAll("button").forEach(b => {
+          b.classList.toggle("on", v === (b.dataset.days === "0" ? today : ymd(y)));
+        });
       });
     }
-    document.querySelectorAll(".date-quick button").forEach(b => b.addEventListener("click", () => {
-      const d = new Date(); d.setDate(d.getDate() - Number(b.dataset.days));
-      $("date").value = ymd(d);
-      renderDateButtons();
-    }));
-    $("date").addEventListener("change", renderDateButtons);
+    document.querySelectorAll(".date-quick").forEach(group => {
+      group.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+        const d = new Date(); d.setDate(d.getDate() - Number(b.dataset.days));
+        $(group.dataset.target).value = ymd(d);
+        renderDateButtons();
+      }));
+      $(group.dataset.target).addEventListener("change", renderDateButtons);
+    });
 
     // ---------- 登録（端末に保存してから非同期で送信） ----------
 
@@ -601,7 +678,9 @@
     }
 
     let toastTimer;
-    function showToast() {
+    function showToast(title = "登録完了！", sub = "家計簿を更新したよ♪") {
+      $("tstTitle").textContent = title;
+      $("tstSub").textContent = sub;
       const tst = $("tst");
       tst.classList.add("show");
       clearTimeout(toastTimer);
@@ -610,8 +689,9 @@
 
     // ---------- 削除 ----------
 
-    window.del = async (id) => {
-      if (!confirm("この記録を消してもいい？")) return;
+    // 確認して削除する。消した場合は true
+    async function del(id) {
+      if (!confirm("この記録を消してもいい？")) return false;
       if (master && master.history) {
         master.history = master.history.filter(h => String(h.id) !== String(id));
         olderHistory = olderHistory.filter(h => String(h.id) !== String(id));
@@ -624,7 +704,87 @@
         alert("削除に失敗しました。");
       }
       load();
-    };
+      return true;
+    }
+
+    // ---------- 修正 ----------
+
+    let editing = null;  // 修正中の記録
+
+    // 古いキャッシュの記録は "MM/dd" しかないので年を補う（未来の月なら前年）
+    function historyYmd(h) {
+      if (h.ymd) return h.ymd;
+      const m = /^(\d{2})\/(\d{2})$/.exec(h.date || "");
+      if (!m) return ymd(new Date());
+      const now = new Date();
+      const year = Number(m[1]) > now.getMonth() + 1 ? now.getFullYear() - 1 : now.getFullYear();
+      return `${year}-${m[1]}-${m[2]}`;
+    }
+
+    function openEditor(id) {
+      const h = serverHistory().find(x => String(x.id) === String(id));
+      if (!h) return;
+      editing = h;
+      // 今はない分類（旧名など）の記録も、そのまま保存できるように選択肢に加える
+      const cats = [...((master && master.categories) || [])];
+      if (h.category && !cats.includes(h.category)) cats.push(h.category);
+      renderCategoryChips("eCategory", cats, h.category);
+      $("eAmount").value = h.amount;
+      $("eMemo").value = h.memo || "";
+      $("eDate").value = historyYmd(h);
+      renderDateButtons();
+      $("editSave").disabled = false;
+      $("editSave").textContent = "保存する";
+      $("editBackdrop").classList.add("show");
+      $("editSheet").classList.add("show");
+    }
+
+    function closeEditor() {
+      editing = null;
+      $("eAcList").classList.remove("show");
+      $("editBackdrop").classList.remove("show");
+      $("editSheet").classList.remove("show");
+    }
+
+    $("editClose").addEventListener("click", closeEditor);
+    $("editBackdrop").addEventListener("click", closeEditor);
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && editing) closeEditor(); });
+
+    $("editDelete").addEventListener("click", async () => {
+      if (!editing) return;
+      const id = editing.id;
+      if (await del(id)) closeEditor();
+    });
+
+    $("ef").addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!editing) return;
+      const amount = $("eAmount").value.replace(/[^0-9]/g, "");
+      const date = $("eDate").value;
+      if (!amount || !date) return;
+      const rec = { amount: Number(amount), category: selectedCategory("eCategory"), memo: $("eMemo").value.trim(), date };
+      const btn = $("editSave");
+      btn.disabled = true;
+      btn.textContent = "保存中…";
+      try {
+        await post({ action: "update", rowId: editing.id, ...rec });
+        // 画面上の記録をすぐ書き換え、裏で予算などを読み直す
+        const patch = h => String(h.id) === String(editing.id)
+          ? { ...h, ...rec, ymd: date, date: date.slice(5).replace("-", "/") } : h;
+        if (master && master.history) master.history = master.history.map(patch);
+        olderHistory = olderHistory.map(patch);
+        countMemo(rec.memo, rec.category);
+        renderHistory();
+        closeEditor();
+        showToast("修正完了！", "記録を直したよ♪");
+        dashStale = true;
+        load({ keepOlder: true });
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "保存する";
+        alert("保存できませんでした。通信状態を確認して、もう一度試してね。");
+      }
+    });
 
     // ---------- タブ切り替え ----------
 
