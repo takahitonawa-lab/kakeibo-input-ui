@@ -145,8 +145,13 @@
     .tab-icon { font-size: 22px; display: block; margin-bottom: 4px; }
 
     #view-input { display: block; height: 100%; }
-    #view-dashboard { display: none; height: 100%; max-width: 500px; margin: 0 auto; padding-bottom: 65px; }
-    #view-dashboard iframe { width: 100%; height: 100%; border: none; background: transparent; }
+    /* 分析は裏で先に読み込むため、使わない間は画面の外に置く（display:none や visibility:hidden だと幅が崩れる） */
+    #view-dashboard { position: absolute; left: -20000px; top: 0; width: 100vw; max-width: 500px; height: 100%; margin: 0 auto; padding-bottom: 65px; pointer-events: none; }
+    #view-dashboard.show { position: relative; left: auto; width: auto; pointer-events: auto; }
+    #dashHost { position: relative; height: 100%; }
+    #dashHost iframe { width: 100%; height: 100%; border: none; background: transparent; }
+    .dash-loading { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font-size: 13px; font-weight: bold; color: var(--muted); }
+    .dash-updating { display: none; position: absolute; right: 12px; top: 8px; z-index: 5; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 11px; font-weight: bold; color: var(--accent-pink); pointer-events: none; }
   </style>
 </head>
 <body>
@@ -211,8 +216,9 @@
   </div>
 
   <div id="view-dashboard">
-    <!-- 分析タブは初めて開いたときに読み込む -->
-    <iframe data-src="https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec" id="dashFrame"></iframe>
+    <!-- 分析は入力画面が表示されたあとに裏で先に読み込み、記録を変えたときも裏で読み直す -->
+    <div class="dash-updating" id="dashUpdating">最新に更新中…</div>
+    <div id="dashHost"><div class="dash-loading" id="dashLoading">📊 分析を準備中…</div></div>
   </div>
 
   <div class="bottom-tab-bar">
@@ -298,7 +304,12 @@
     let loadingMore = false;
     let loadSeq = 0;
     let lastLoadAt = 0;
-    let dashStale = false;
+    let dashStale = false;    // 記録が変わって、分析を読み直す予定がある
+    let dashLive = null;      // 表示できる状態の分析 iframe
+    let dashPending = null;   // 裏で読み込み中の分析 iframe
+    let dashLoadedAt = 0;
+    let dashTimer = null;
+    let dashPreloaded = false;
 
     // ---------- 通信 ----------
 
@@ -507,6 +518,8 @@
         renderAll();
         renderSync(false);
         loadMemoStats();
+        // 入力画面が整ってから、分析を裏で先に読み込む（開いたときにすぐ見せるため）
+        if (!dashPreloaded) { dashPreloaded = true; setTimeout(() => { if (!dashLive && !dashPending) refreshDash(); }, 1500); }
       } catch (e) {
         if (seq !== loadSeq) return;
         renderSync(true);
@@ -672,7 +685,7 @@
         renderSync(false);
       }
       if (sentAny) {
-        dashStale = true;
+        scheduleDashRefresh();
         load();
       }
     }
@@ -699,7 +712,7 @@
       }
       try {
         await post({ action: "delete", rowId: id });
-        dashStale = true;
+        scheduleDashRefresh();
       } catch (e) {
         alert("削除に失敗しました。");
       }
@@ -777,7 +790,7 @@
         renderHistory();
         closeEditor();
         showToast("修正完了！", "記録を直したよ♪");
-        dashStale = true;
+        scheduleDashRefresh();
         load({ keepOlder: true });
       } catch (err) {
         btn.disabled = false;
@@ -788,20 +801,70 @@
 
     // ---------- タブ切り替え ----------
 
+    // ---------- 分析タブ（裏で読み込んでおく） ----------
+
+    function updateDashBadge() {
+      // 表示中の分析があり、それが古くなる（または入れ替え待ち）ときだけ知らせる
+      $("dashUpdating").style.display = (dashLive && (dashStale || dashPending)) ? "block" : "none";
+    }
+
+    // 新しい分析を見えない状態で読み込み、表示できる合図が来たら入れ替える（空白を見せない）
+    function refreshDash() {
+      clearTimeout(dashTimer);
+      if (dashPending) { clearTimeout(dashPending._fallback); dashPending.remove(); }
+      const f = document.createElement("iframe");
+      f.title = "分析";
+      f.style.cssText = "position:absolute; inset:0; visibility:hidden;";
+      f.src = GAS_URL + "?v=" + Date.now();
+      $("dashHost").appendChild(f);
+      dashPending = f;
+      dashStale = false;
+      // 合図が届かなくても（古い版など）60秒後には切り替える
+      f._fallback = setTimeout(() => { if (dashPending === f) swapDash(); }, 60000);
+      updateDashBadge();
+    }
+
+    function swapDash() {
+      const f = dashPending;
+      if (!f) return;
+      clearTimeout(f._fallback);
+      if (dashLive) dashLive.remove();
+      f.style.cssText = "";
+      dashLive = f;
+      dashPending = null;
+      dashLoadedAt = Date.now();
+      $("dashLoading").style.display = "none";
+      updateDashBadge();
+    }
+
+    // 記録が変わったら、少し待ってまとめて読み直す
+    function scheduleDashRefresh(delay = 3000) {
+      dashStale = true;
+      clearTimeout(dashTimer);
+      dashTimer = setTimeout(refreshDash, delay);
+      updateDashBadge();
+    }
+
+    window.addEventListener("message", e => {
+      if (!e.data || e.data.type !== "kakeibo-dash-ready" || !dashPending) return;
+      try {
+        const h = new URL(e.origin).hostname;
+        if (!(h === "script.google.com" || h.endsWith(".googleusercontent.com"))) return;
+      } catch (err) { return; }
+      swapDash();
+    });
+
     window.switchTab = function(target) {
       if(target === 'input') {
         $('view-input').style.display = 'block';
-        $('view-dashboard').style.display = 'none';
+        $('view-dashboard').classList.remove('show');
         $('tab-input').classList.add('active');
         $('tab-dashboard').classList.remove('active');
       } else {
-        const frame = $('dashFrame');
-        if (!frame.getAttribute('src') || dashStale) {
-          frame.src = frame.dataset.src;
-          dashStale = false;
-        }
+        if (!dashLive && !dashPending) refreshDash();
+        updateDashBadge();
         $('view-input').style.display = 'none';
-        $('view-dashboard').style.display = 'block';
+        $('view-dashboard').classList.add('show');
         $('tab-input').classList.remove('active');
         $('tab-dashboard').classList.add('active');
       }
@@ -821,6 +884,8 @@
       if (document.visibilityState !== "visible") return;
       flush();
       if (Date.now() - lastLoadAt > 60 * 1000) load();
+      // 開きっぱなしで古くなった分析（他の端末での登録など）を裏で読み直す
+      if (dashLive && !dashPending && Date.now() - dashLoadedAt > 5 * 60 * 1000) scheduleDashRefresh(1000);
       renderBudget();
       renderDateButtons();
     });
