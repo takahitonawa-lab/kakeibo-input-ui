@@ -57,9 +57,9 @@ ${cats}`;
 function runClaude(dir, prompt) {
   return new Promise((resolve, reject) => {
     // API キーを渡さない＝ログイン中の契約で動かす
+    // （Claude のアプリの中から起動された場合に備えて、アプリ用の設定も引き継がない）
     const env = { ...process.env };
-    delete env.ANTHROPIC_API_KEY;
-    delete env.ANTHROPIC_AUTH_TOKEN;
+    for (const k of Object.keys(env)) if (/^(ANTHROPIC|CLAUDE)/i.test(k)) delete env[k];
     const child = spawn(CLAUDE, ["-p", "--model", MODEL, "--tools", "Read", "--allowedTools", "Read", "--output-format", "json"],
       { cwd: dir, env, windowsHide: true });
     let out = "", err = "";
