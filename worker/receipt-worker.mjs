@@ -2,6 +2,7 @@
 //
 // GAS に「読み取り待ちの写真はあるか」を数秒おきに聞きに行き、あればこのパソコンの Claude Code に
 // 読み取らせて、結果を GAS に返す。通信はこのパソコンから外へ出るだけで、外から入る口は開けない。
+// 1枚ごとに使い捨てのセッションで読み、会話の記録はディスクに残さない（--no-session-persistence）。
 // Claude Code は API キーを渡さずに起動するので、ログイン中の契約の利用枠で動く（API の従量課金にならない）。
 //
 // 使い方： node worker/receipt-worker.mjs   （設定は worker/config.json。config.example.json を参照）
@@ -64,7 +65,7 @@ function runClaude(dir, prompt) {
     // （Claude のアプリの中から起動された場合に備えて、アプリ用の設定も引き継がない）
     const env = { ...process.env };
     for (const k of Object.keys(env)) if (/^(ANTHROPIC|CLAUDE)/i.test(k)) delete env[k];
-    const child = spawn(CLAUDE, ["-p", "--model", MODEL, "--tools", "Read", "--allowedTools", "Read", "--output-format", "json"],
+    const child = spawn(CLAUDE, ["-p", "--model", MODEL, "--tools", "Read", "--allowedTools", "Read", "--output-format", "json", "--no-session-persistence"],
       { cwd: dir, env, windowsHide: true });
     let out = "", err = "";
     const timer = setTimeout(() => { child.kill(); reject(new Error("timeout")); }, TIMEOUT_MS);
