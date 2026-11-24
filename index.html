@@ -654,7 +654,9 @@
       if (!c) return null;
       const today = ymd(new Date());
       // 年の枠は数え始めの日（yearFrom）以降・今年の分。月は今月の分
-      const inSpan = d => c.yearly
+      // 繰り越し型は数え始めからずっと（年をまたいで）数える
+      const inSpan = d => c.carry ? d >= String(c.yearFrom || "")
+        : c.yearly
         ? d.slice(0, 4) === today.slice(0, 4) && d >= String(c.yearFrom || today.slice(0, 4) + "-01-01")
         : d.slice(0, 7) === today.slice(0, 7);
       const pending = [...outbox, ...justSent]
@@ -666,15 +668,19 @@
       const span = c.yearly ? "今年" : "今月";
       let text = "";
       if (budget > 0) text = rest >= 0 ? `${name}：${span}あと ¥${yen(rest)}` : `${name}：${span} ¥${yen(-rest)} オーバー`;
+      // 繰り越し型：残りは翌年に持ち越す。超えた分は「先取り」として、この先の枠で埋めていく
+      if (c.carry && budget > 0) text = rest >= 0 ? `${name}：あと ¥${yen(rest)}` : `${name}：¥${yen(-rest)} 先取り中`;
       // 年の枠の説明。数え始めた年は日割りなので、その旨を出す
       let frame = "";
-      if (c.yearly && budget > 0) {
+      if (c.carry && budget > 0) {
+        frame = `（残りは繰り越し・毎年 ¥${yen(c.yearFull)} ずつ入るよ）`;
+      } else if (c.yearly && budget > 0) {
         const from = String(c.yearFrom || "");
         frame = Number(c.yearFull) > budget && from
           ? `（${Number(from.slice(5, 7))}/${Number(from.slice(8, 10))}〜12/31 の日割り ¥${yen(budget)}）`
           : `（年 ¥${yen(budget)} の枠）`;
       }
-      return { text, over: budget > 0 && rest < 0, note: c.note || "", frame };
+      return { text, over: budget > 0 && rest < 0 && !c.carry, note: c.note || "", frame };
     }
 
     function renderCatInfo(hint) {
