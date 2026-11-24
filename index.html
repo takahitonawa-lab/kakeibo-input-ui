@@ -60,6 +60,9 @@
       .cat-row { gap: 4px; }
       .cat-chip span { padding: 9px 3px; font-size: 12px; }
     }
+    .cat-sub { margin: 4px 0 -2px 4px; font-size: 10px; font-weight: bold; color: #b8a8b8; }
+    .cat-row.special .cat-chip span { padding: 8px 4px; font-size: 12px; background: #faf7ff; border-style: dashed; }
+    .cat-row.special .cat-chip input:checked + span { border-style: solid; }
     .cat-chip.flash span { animation: flash .6s ease; }
     /* 分類を選び直してほしいとき（同じお店でもう1件・いくつかの分類で使うお店） */
     .cat-grid.pick .cat-chip span { animation: pick 1.2s ease 2; }
@@ -125,6 +128,14 @@
     /* 未送信・通信状態 */
     .sync-bar { display: none; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border-radius: 16px; background: #fff; border: 1.5px dashed #ffc6dc; font-size: 12px; font-weight: bold; color: #777; }
     .sync-bar.show { display: flex; }
+    /* 先月の結果（月初めに1回出す） */
+    .result-card { display: none; position: relative; margin: 0 0 12px; padding: 14px 40px 14px 16px; border-radius: 20px; background: #fff; border: var(--border-thick) solid #ffe0ec; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .result-card.show { display: block; }
+    .result-title { font-size: 16px; font-weight: 900; color: #10b981; }
+    .result-card.over .result-title { color: var(--accent-pink); }
+    .result-sub { margin-top: 4px; font-size: 12px; font-weight: bold; color: var(--muted); line-height: 1.5; }
+    .result-sub b { color: var(--ink); }
+    .result-close { position: absolute; right: 8px; top: 8px; border: none; background: #fff0f5; width: 28px; height: 28px; border-radius: 10px; font-size: 13px; font-weight: bold; color: #c9a9bb; cursor: pointer; }
     .sync-bar button { flex: 0 0 auto; border: none; background: var(--accent-pink); color: #fff; border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
     .empty-msg { text-align: center; font-size: 12px; color: var(--muted); padding: 16px 0; }
     .more-btn { display: block; width: 100%; height: 42px; margin-top: 4px; border-radius: 16px; border: 1.5px solid #fff; background: rgba(255, 255, 255, 0.7); color: var(--accent-pink); font-size: 13px; font-weight: bold; cursor: pointer; }
@@ -275,6 +286,8 @@
         <div class="budget-bar-bg"><div class="budget-bar-fill" id="bar"></div></div>
         <div class="budget-sub" id="budgetSub"></div>
       </div>
+
+      <div class="result-card" id="resultCard"><button type="button" class="result-close" id="resultClose" aria-label="閉じる">✕</button><div class="result-title" id="resultTitle"></div><div class="result-sub" id="resultSub"></div></div>
 
       <div class="sync-bar" id="syncBar"><span id="syncMsg"></span><button type="button" id="syncBtn">再送する</button></div>
 
@@ -429,6 +442,7 @@
     const KEY_MASTER = "kakeibo.master.v1";   // 前回の action=master 応答
     const KEY_OUTBOX = "kakeibo.outbox.v1";   // 未送信の記録
     const KEY_MEMOS  = "kakeibo.memos.v2";    // 自由記入欄の候補（入力値→分類ごとの回数）
+    const KEY_RESULT = "kakeibo.result.seen"; // 「先月の結果」を閉じた月
     const HISTORY_PAGE = 10;
 
     const $ = id => document.getElementById(id);
@@ -589,10 +603,15 @@
     // 分類ボタンは2行に分けて並べる（grid は入力欄なら "category"、修正パネルなら "eCategory"）
     function renderCategoryChips(grid, cats, current) {
       const chip = c => `<label class="cat-chip"><input type="radio" name="${grid}" value="${esc(c)}" ${c === current ? "checked" : ""}><span>${esc(c)}</span></label>`;
-      const half = Math.ceil(cats.length / 2);
-      $(grid).innerHTML = [cats.slice(0, half), cats.slice(half)]
+      // 特別費の枠（年で数える分類）は、ふだんの分類と分けて3行目に並べる
+      const yearly = new Set(((master && master.cats) || []).filter(c => c.yearly).map(c => c.name));
+      const usual = cats.filter(c => !yearly.has(c));
+      const special = cats.filter(c => yearly.has(c));
+      const half = Math.ceil(usual.length / 2);
+      $(grid).innerHTML = [usual.slice(0, half), usual.slice(half)]
         .filter(row => row.length)
-        .map(row => `<div class="cat-row">${row.map(chip).join("")}</div>`).join("");
+        .map(row => `<div class="cat-row">${row.map(chip).join("")}</div>`).join("")
+        + (special.length ? `<div class="cat-sub">特別費（年の枠）</div><div class="cat-row special">${special.map(chip).join("")}</div>` : "");
     }
 
     function renderCategories() {
@@ -750,7 +769,34 @@
       }
     }
 
+    // 先月の結果。予算内なら余りを返済に回す、という約束のための表示。閉じるまで出す
+    function renderResult() {
+      const r = master && master.last;
+      const card = $("resultCard");
+      let seen = "";
+      try { seen = localStorage.getItem(KEY_RESULT) || ""; } catch (e) {}
+      if (!r || !r.month || seen === r.month) { card.classList.remove("show"); return; }
+      const m = Number(r.month.slice(5));
+      const rest = Number(r.budget) - Number(r.total);
+      const cats = r.cats || [];
+      const cleared = cats.filter(c => Number(c.spent) <= Number(c.budget)).length;
+      card.classList.toggle("over", rest < 0);
+      $("resultTitle").textContent = rest >= 0 ? `🎉 ${m}月は予算クリア！` : `${m}月は ¥${yen(-rest)} オーバー`;
+      $("resultSub").innerHTML = (rest >= 0
+        ? `余り <b>¥${yen(rest)}</b> は返済に回そう。ふたりともおつかれさま！`
+        : `今月は取り返そう。無理せずいこうね`)
+        + `<br>¥${yen(r.total)} / ¥${yen(r.budget)}・${cats.length}分類のうち ${cleared}つクリア`;
+      card.dataset.month = r.month;
+      card.classList.add("show");
+    }
+    $("resultClose").addEventListener("click", () => {
+      const card = $("resultCard");
+      try { localStorage.setItem(KEY_RESULT, card.dataset.month || ""); } catch (e) {}
+      card.classList.remove("show");
+    });
+
     function renderAll() {
+      renderResult();
       renderBudget();
       renderCategories();
       renderHistory();
