@@ -180,6 +180,25 @@
     .account-line { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 26px; font-size: 11px; color: #b8a8b8; }
     .account-line button { border: none; background: none; padding: 4px; color: #b8a8b8; font-size: 11px; font-weight: bold; text-decoration: underline; cursor: pointer; }
 
+    /* レシート読み取り */
+    .rc-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: 0 0 12px; height: 44px; border-radius: 14px; border: 1.5px solid #ffe0ec; background: #fff; color: var(--accent-pink); font-size: 14px; font-weight: 900; cursor: pointer; }
+    .rc-btn:active { background: #fff0f5; }
+    .rc-status { text-align: center; padding: 28px 10px; font-size: 14px; font-weight: bold; color: var(--muted); line-height: 1.7; }
+    .rc-status b { display: block; font-size: 30px; margin-bottom: 6px; }
+    .rc-head { display: flex; gap: 8px; }
+    .rc-head > div { flex: 1; min-width: 0; }
+    .rc-items { margin: 4px 0 10px; border-top: 1px solid #ffe0ec; }
+    .rc-item { display: flex; align-items: center; gap: 6px; padding: 7px 0; border-bottom: 1px solid #fff0f5; }
+    .rc-name { flex: 1; min-width: 0; font-size: 12.5px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rc-price { flex: 0 0 auto; font-size: 13px; font-weight: 900; color: var(--accent-pink); }
+    .rc-item select { flex: 0 0 112px; width: 112px; height: 34px; margin: 0; padding: 0 6px; font-size: 12px; font-weight: bold; border-radius: 10px; border: 1.5px solid #eee; background: #fff; }
+    .rc-item select.need { border-color: var(--accent-pink); background: #fff0f5; }
+    .rc-sum { background: #fff; border: 1.5px solid #ffe0ec; border-radius: 14px; padding: 8px 12px; }
+    .rc-sum-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; font-weight: bold; color: #555; }
+    .rc-sum-row.total { border-top: 1px dashed #ffc6dc; margin-top: 4px; padding-top: 7px; font-weight: 900; color: var(--accent-pink); }
+    .rc-warn { display: none; margin-top: 10px; padding: 9px 12px; border-radius: 14px; background: #fff; border: 1.5px dashed #ffc6dc; font-size: 12px; font-weight: bold; color: var(--accent-pink); line-height: 1.5; }
+    .rc-warn.show { display: block; }
+
     /* ▼ 追加：タブ切り替えとダッシュボード用のCSS ▼ */
     .bottom-tab-bar {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
@@ -293,6 +312,8 @@
 
       <div class="card">
         <form id="f">
+          <label class="rc-btn" for="rcInput">📷 レシートを読む</label>
+          <input type="file" id="rcInput" accept="image/*" capture="environment" hidden>
           <button type="button" class="again-btn" id="againBtn" hidden>🏪 <span id="againName"></span> でもう1件<small>分類ごとに分けて入れるとき</small></button>
           <label>金額</label>
           <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
@@ -425,6 +446,31 @@
         <button type="submit" class="sheet-save" id="editSave">保存する</button>
       </div>
     </form>
+  </div>
+
+  <!-- レシートの確認パネル -->
+  <div class="sheet-backdrop" id="rcBackdrop"></div>
+  <div class="sheet" id="rcSheet" role="dialog" aria-modal="true" aria-labelledby="rcTitle">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><span class="sheet-title" id="rcTitle">レシートを確認</span><button type="button" class="sheet-close" id="rcClose" aria-label="閉じる">✕</button></div>
+    <div class="card" id="rcWait"><div class="rc-status" id="rcStatus"></div></div>
+    <div class="card" id="rcBody" hidden>
+      <label>お店・メモ</label>
+      <input id="rcStore" autocomplete="off">
+      <div class="rc-head">
+        <div><label>日付</label><input id="rcDate" type="date" class="date-input"></div>
+        <div><label>レシートの合計</label><input id="rcTotal" type="tel" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <label style="margin-top:12px;">明細（分類はタップで変えられるよ）</label>
+      <div class="rc-items" id="rcItems"></div>
+      <label>分類ごとの登録額</label>
+      <div class="rc-sum" id="rcSum"></div>
+      <div class="rc-warn" id="rcWarn"></div>
+      <div class="sheet-actions">
+        <button type="button" class="sheet-del" id="rcCancel">やめる</button>
+        <button type="button" class="sheet-save" id="rcSave">登録する</button>
+      </div>
+    </div>
   </div>
 
   <div class="toastWrap"><div class="toast" id="tst"><img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'"><div><div id="tstTitle" style="font-weight:900; font-size:20px; color:var(--accent-pink);">登録完了！</div><div id="tstSub" style="font-size:12px; color:#a0a0b0;">家計簿を更新したよ♪</div></div></div></div>
@@ -1159,6 +1205,151 @@
         if (err instanceof AuthError) { closeEditor(); return; }
         alert("保存できませんでした。通信状態を確認して、もう一度試してね。");
       }
+    });
+
+    // ---------- レシート読み取り ----------
+
+    // 写真を送ると、自宅のパソコンが読み取って、明細と分類の案を返す。必ずこの確認パネルを挟み、自動では登録しない
+    let rc = null;       // 読み取り結果（確認中）
+    let rcSeq = 0;       // パネルを閉じたら、遅れて届いた結果は捨てる
+
+    // 端末側で縮小する（長辺1400pxのJPEG）。通信量と読み取り時間を抑えるため
+    function shrinkImage(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+          const c = document.createElement("canvas");
+          c.width = Math.round(img.naturalWidth * scale);
+          c.height = Math.round(img.naturalHeight * scale);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL("image/jpeg", 0.72).split(",")[1]);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image")); };
+        img.src = url;
+      });
+    }
+
+    function rcOpen() { $("rcBackdrop").classList.add("show"); $("rcSheet").classList.add("show"); }
+    function rcClose() { rcSeq++; rc = null; $("rcBackdrop").classList.remove("show"); $("rcSheet").classList.remove("show"); }
+    function rcShowStatus(icon, html) {
+      $("rcWait").hidden = false; $("rcBody").hidden = true;
+      $("rcStatus").innerHTML = `<b>${icon}</b>${html}`;
+    }
+    $("rcClose").addEventListener("click", rcClose);
+    $("rcCancel").addEventListener("click", rcClose);
+    $("rcBackdrop").addEventListener("click", rcClose);
+
+    // 写真（base64）を送って、結果が届くまで待つ
+    async function rcRead(image) {
+      const seq = ++rcSeq;
+      rcOpen();
+      rcShowStatus("📷", "写真を送っているよ…");
+      try {
+        const sub = await api("receipt_submit", { image }, { timeout: 45000 });
+        if (seq !== rcSeq) return;
+        rcShowStatus("🔍", sub.workerOnline ? "レシートを読んでいるよ…<br>30秒くらいかかるよ" : "レシートを読んでいるよ…<br>（おうちのパソコンが起きていないと読めないよ）");
+        const started = Date.now();
+        for (;;) {
+          await sleep(3000);
+          if (seq !== rcSeq) return;
+          const r = await api("receipt_poll", { id: sub.id }, { timeout: 12000, retries: 1 });
+          if (seq !== rcSeq) return;
+          if (r.status === "done" && r.result) { rcRender(r.result); return; }
+          if (r.status === "error" || r.status === "expired") throw new Error(r.message || r.status);
+          if (Date.now() - started > 120000) throw new Error(r.workerOnline ? "timeout" : "offline");
+        }
+      } catch (err) {
+        if (seq !== rcSeq || err instanceof AuthError) return;
+        const m = String(err && err.message || "");
+        rcShowStatus("🙏", m === "daily limit" ? "今日はもう読み取りの上限だよ。<br>手入力でお願いね"
+          : m === "offline" ? "おうちのパソコンが起きていないみたい。<br>手入力でお願いね"
+          : m === "login" ? "パソコンの Claude のログインが切れているみたい。<br>手入力でお願いね"
+          : "うまく読めなかったよ。<br>もう一度撮るか、手入力でお願いね");
+      }
+    }
+
+    $("rcInput").addEventListener("change", async e => {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      let image;
+      try { image = await shrinkImage(file); } catch (err) { alert("写真を読み込めませんでした。もう一度撮ってね。"); return; }
+      rcRead(image);
+    });
+
+    function rcRender(result) {
+      const cats = (master && master.categories) || [];
+      rc = {
+        items: (result.items || []).map(it => ({ name: String(it.name || ""), price: Number(it.price) || 0, category: cats.includes(it.category) ? it.category : "" }))
+      };
+      $("rcStore").value = result.store || "";
+      $("rcDate").value = result.date || ymd(new Date());
+      $("rcTotal").value = result.total || "";
+      $("rcItems").innerHTML = rc.items.map((it, i) => `
+        <div class="rc-item"><span class="rc-name">${esc(it.name)}</span><span class="rc-price">${it.price < 0 ? "−" : ""}¥${yen(Math.abs(it.price))}</span>
+          <select data-i="${i}" class="${it.category ? "" : "need"}"><option value="">えらぶ</option>${cats.map(c => `<option value="${esc(c)}"${c === it.category ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`).join("");
+      $("rcWait").hidden = true; $("rcBody").hidden = false;
+      rcUpdate();
+    }
+    $("rcItems").addEventListener("change", e => {
+      const sel = e.target.closest("select[data-i]");
+      if (!sel || !rc) return;
+      rc.items[Number(sel.dataset.i)].category = sel.value;
+      sel.classList.toggle("need", !sel.value);
+      rcUpdate();
+    });
+    $("rcTotal").addEventListener("input", rcUpdate);
+
+    // 分類ごとの登録額。明細の小計を分類ごとに足し、レシートの合計に合うように税・値引きを按分する
+    // （端数は金額の大きい分類に寄せる）。合計が読めていなければ、明細の金額のまま使う
+    function rcSplit() {
+      const sums = {};
+      rc.items.forEach(it => { if (it.category) sums[it.category] = (sums[it.category] || 0) + it.price; });
+      const list = Object.entries(sums).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+      const raw = list.reduce((a, [, v]) => a + v, 0);
+      const total = Number($("rcTotal").value.replace(/[^0-9]/g, "")) || 0;
+      let out = list.map(([c, v]) => [c, v]);
+      if (total > 0 && raw > 0 && total !== raw) {
+        out = list.map(([c, v]) => [c, Math.round(v * total / raw)]);
+        out[0][1] += total - out.reduce((a, [, v]) => a + v, 0);
+      }
+      return { out: out.filter(([, v]) => v > 0), raw, total };
+    }
+
+    function rcUpdate() {
+      if (!rc) return;
+      const { out, raw, total } = rcSplit();
+      const missing = rc.items.filter(it => !it.category).length;
+      $("rcSum").innerHTML = out.map(([c, v]) => `<div class="rc-sum-row"><span>${esc(c)}</span><span>¥${yen(v)}</span></div>`).join("")
+        + `<div class="rc-sum-row total"><span>合計</span><span>¥${yen(out.reduce((a, [, v]) => a + v, 0))}</span></div>`;
+      const warns = [];
+      if (missing) warns.push(`分類を選んでいない明細が ${missing}件あるよ`);
+      if (!total) warns.push("レシートの合計が読めなかったよ。合計を入れると、税や値引きを合わせて計算するよ");
+      else if (raw > 0 && Math.abs(total - raw) / total > 0.12) warns.push(`明細の合計（¥${yen(raw)}）とレシートの合計（¥${yen(total)}）が大きく違うよ。読み落としがないか見てね`);
+      $("rcWarn").innerHTML = warns.map(esc).join("<br>");
+      $("rcWarn").classList.toggle("show", warns.length > 0);
+      $("rcSave").disabled = missing > 0 || !out.length;
+      $("rcSave").textContent = out.length > 1 ? `${out.length}件に分けて登録する` : "登録する";
+    }
+
+    // 分類ごとに1件ずつ登録する（お店と日付は共通）。いつもの送信待ちの仕組みに載せる
+    $("rcSave").addEventListener("click", () => {
+      if (!rc) return;
+      const { out } = rcSplit();
+      const memo = $("rcStore").value.trim();
+      const date = $("rcDate").value || ymd(new Date());
+      out.forEach(([category, amount]) => {
+        outbox.push({ localId: newLocalId(), amount, category, memo, date });
+        countMemo(memo, category);
+      });
+      save(KEY_OUTBOX, outbox);
+      rcClose();
+      renderHistory();
+      renderCatInfo();
+      flush();
     });
 
     // ---------- タブ切り替え ----------

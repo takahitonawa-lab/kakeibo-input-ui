@@ -1,2 +1,5 @@
 ﻿# GAS のソースは clasp で管理し、GitHub（公開）には上げない
 gas/
+
+# レシート読み取りの作業役の設定（合言葉が入るので公開しない）
+worker/config.json

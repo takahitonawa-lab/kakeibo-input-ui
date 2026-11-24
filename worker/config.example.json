@@ -1,0 +1,6 @@
+{
+  "gasUrl": "https://script.google.com/macros/s/＜デプロイID＞/exec",
+  "key": "＜スクリプトプロパティ WORKER_KEY と同じ値＞",
+  "model": "haiku",
+  "pollMs": 4000
+}
