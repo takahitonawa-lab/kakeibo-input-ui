@@ -36,7 +36,11 @@ async function call(action, fields = {}) {
 // 分類の一覧と説明は GAS（Category_Master）から届いたものをそのまま使う
 function buildPrompt(job) {
   const cats = job.cats.map(c => `- ${c.name}：${c.note || "（説明なし）"}`).join("\n");
-  return `このフォルダの receipt.jpg は、日本のお店のレシートの写真です。Read ツールでこの画像を読み、内容を次の形の JSON だけで答えてください（前後に文章やコードブロックを付けない）。
+  const n = job.image.split(",").length;
+  const intro = n > 1
+    ? `このフォルダの receipt-1.jpg から receipt-${n}.jpg は、1枚の長いレシートを上から順に ${n}回に分けて撮った写真です。Read ツールで全部の画像を読み、1枚のレシートとしてまとめてください。写真どうしで重なって写っている行は、1回だけ数えます。`
+    : "このフォルダの receipt-1.jpg は、日本のお店のレシートの写真です。Read ツールでこの画像を読んでください。";
+  return `${intro}内容を次の形の JSON だけで答えてください（前後に文章やコードブロックを付けない）。
 
 {"store":"店名","date":"YYYY-MM-DD","total":合計金額,"items":[{"name":"品名","price":金額,"category":"分類名"}]}
 
@@ -107,7 +111,7 @@ async function handle(job) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kakeibo-rc-"));
   const started = Date.now();
   try {
-    fs.writeFileSync(path.join(dir, "receipt.jpg"), Buffer.from(job.image, "base64"));
+    job.image.split(",").forEach((b64, i) => fs.writeFileSync(path.join(dir, `receipt-${i + 1}.jpg`), Buffer.from(b64, "base64")));
     const text = await runClaude(dir, buildPrompt(job));
     const result = parseResult(text, job);
     await call("worker_done", { id: job.id, result: JSON.stringify(result) });

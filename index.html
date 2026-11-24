@@ -198,6 +198,9 @@
     .rc-sum-row.total { border-top: 1px dashed #ffc6dc; margin-top: 4px; padding-top: 7px; font-weight: 900; color: var(--accent-pink); }
     .rc-warn { display: none; margin-top: 10px; padding: 9px 12px; border-radius: 14px; background: #fff; border: 1.5px dashed #ffc6dc; font-size: 12px; font-weight: bold; color: var(--accent-pink); line-height: 1.5; }
     .rc-warn.show { display: block; }
+    .rc-add { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0 6px; margin: 12px 0 0; padding: 10px 12px; border-radius: 14px; border: 1.5px dashed #ffc6dc; background: #fff; color: var(--accent-pink); font-size: 13px; font-weight: 900; white-space: normal; cursor: pointer; }
+    .rc-add[hidden] { display: none; }
+    .rc-add small { font-size: 10.5px; color: var(--muted); font-weight: bold; }
 
     /* ▼ 追加：タブ切り替えとダッシュボード用のCSS ▼ */
     .bottom-tab-bar {
@@ -314,6 +317,7 @@
         <form id="f">
           <label class="rc-btn" for="rcInput">📷 レシートを読む</label>
           <input type="file" id="rcInput" accept="image/*" capture="environment" hidden>
+          <input type="file" id="rcAddInput" accept="image/*" capture="environment" hidden>
           <button type="button" class="again-btn" id="againBtn" hidden>🏪 <span id="againName"></span> でもう1件<small>分類ごとに分けて入れるとき</small></button>
           <label>金額</label>
           <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
@@ -466,6 +470,7 @@
       <label>分類ごとの登録額</label>
       <div class="rc-sum" id="rcSum"></div>
       <div class="rc-warn" id="rcWarn"></div>
+      <label class="rc-add" id="rcAdd" for="rcAddInput">📷 長いレシートは、続きを撮り足す<small id="rcAddNote"></small></label>
       <div class="sheet-actions">
         <button type="button" class="sheet-del" id="rcCancel">やめる</button>
         <button type="button" class="sheet-save" id="rcSave">登録する</button>
@@ -1212,6 +1217,8 @@
     // 写真を送ると、自宅のパソコンが読み取って、明細と分類の案を返す。必ずこの確認パネルを挟み、自動では登録しない
     let rc = null;       // 読み取り結果（確認中）
     let rcSeq = 0;       // パネルを閉じたら、遅れて届いた結果は捨てる
+    let rcImages = [];   // 今のレシートの写真（長いレシートは撮り足して4枚まで）
+    const RC_MAX_PHOTOS = 4;
 
     // 端末側で縮小する（長辺1400pxのJPEG）。通信量と読み取り時間を抑えるため
     function shrinkImage(file) {
@@ -1233,7 +1240,7 @@
     }
 
     function rcOpen() { $("rcBackdrop").classList.add("show"); $("rcSheet").classList.add("show"); }
-    function rcClose() { rcSeq++; rc = null; $("rcBackdrop").classList.remove("show"); $("rcSheet").classList.remove("show"); }
+    function rcClose() { rcSeq++; rc = null; rcImages = []; $("rcBackdrop").classList.remove("show"); $("rcSheet").classList.remove("show"); }
     function rcShowStatus(icon, html) {
       $("rcWait").hidden = false; $("rcBody").hidden = true;
       $("rcStatus").innerHTML = `<b>${icon}</b>${html}`;
@@ -1242,13 +1249,14 @@
     $("rcCancel").addEventListener("click", rcClose);
     $("rcBackdrop").addEventListener("click", rcClose);
 
-    // 写真（base64）を送って、結果が届くまで待つ
-    async function rcRead(image) {
+    // 写真（base64。撮り足したときは数枚）を送って、結果が届くまで待つ
+    async function rcRead(images) {
       const seq = ++rcSeq;
+      rcImages = [].concat(images);
       rcOpen();
-      rcShowStatus("📷", "写真を送っているよ…");
+      rcShowStatus("📷", rcImages.length > 1 ? `写真 ${rcImages.length}枚を送っているよ…` : "写真を送っているよ…");
       try {
-        const sub = await api("receipt_submit", { image }, { timeout: 45000 });
+        const sub = await api("receipt_submit", { image: rcImages.join(",") }, { timeout: 60000 });
         if (seq !== rcSeq) return;
         rcShowStatus("🔍", sub.workerOnline ? "レシートを読んでいるよ…<br>30秒くらいかかるよ" : "レシートを読んでいるよ…<br>（おうちのパソコンが起きていないと読めないよ）");
         const started = Date.now();
@@ -1277,7 +1285,17 @@
       if (!file) return;
       let image;
       try { image = await shrinkImage(file); } catch (err) { alert("写真を読み込めませんでした。もう一度撮ってね。"); return; }
-      rcRead(image);
+      rcRead([image]);
+    });
+
+    // 撮り足し：今までの写真と合わせて、もう一度まとめて読み直す
+    $("rcAddInput").addEventListener("change", async e => {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!file || !rcImages.length || rcImages.length >= RC_MAX_PHOTOS) return;
+      let image;
+      try { image = await shrinkImage(file); } catch (err) { alert("写真を読み込めませんでした。もう一度撮ってね。"); return; }
+      rcRead([...rcImages, image]);
     });
 
     function rcRender(result) {
@@ -1292,6 +1310,8 @@
         <div class="rc-item"><span class="rc-name">${esc(it.name)}</span><span class="rc-price">${it.price < 0 ? "−" : ""}¥${yen(Math.abs(it.price))}</span>
           <select data-i="${i}" class="${it.category ? "" : "need"}"><option value="">えらぶ</option>${cats.map(c => `<option value="${esc(c)}"${c === it.category ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`).join("");
       $("rcWait").hidden = true; $("rcBody").hidden = false;
+      $("rcAdd").hidden = rcImages.length >= RC_MAX_PHOTOS;
+      $("rcAddNote").textContent = rcImages.length > 1 ? `いま ${rcImages.length}枚。重なった行は1回だけ数えるよ` : "上から順に、少し重ねて撮ってね";
       rcUpdate();
     }
     $("rcItems").addEventListener("change", e => {
