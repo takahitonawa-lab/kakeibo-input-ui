@@ -101,7 +101,14 @@
     .date-quick button.on { background: #ffe0ec; border-color: #ffc6dc; color: var(--accent-pink); }
     /* iOS の日付欄は width を無視するので見た目をリセットして横幅を揃える */
     input[type="date"].date-input { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; height: 38px; margin: 0; border-radius: 12px; border-color: #eee; font-size: 14px; text-align: left; background: #fff; color: var(--ink); }
-    input[type="date"].date-input::-webkit-date-and-time-value { text-align: left; }
+    input[type="date"].date-input { line-height: 36px; padding-top: 0; padding-bottom: 0; }
+    input[type="date"].date-input::-webkit-date-and-time-value { text-align: left; margin: 0; line-height: 36px; min-height: 36px; }
+    input[type="date"].date-input::-webkit-datetime-edit { padding: 0; line-height: 36px; }
+    /* レシートの確認画面では、隣の「合計」と高さをそろえる */
+    .rc-head input { height: 46px; margin: 0; }
+    .rc-head input[type="date"].date-input { height: 46px; line-height: 44px; border-radius: 14px; }
+    .rc-head input[type="date"].date-input::-webkit-date-and-time-value { line-height: 44px; min-height: 44px; }
+    .rc-head input[type="date"].date-input::-webkit-datetime-edit { line-height: 44px; }
 
     .btn-group { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
     .stamp-btn {
@@ -184,6 +191,8 @@
     .rc-btns { display: flex; gap: 8px; margin: 0 0 12px; }
     .rc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; margin: 0; height: 44px; border-radius: 14px; border: 1.5px solid #ffe0ec; background: #fff; color: var(--accent-pink); font-size: 14px; font-weight: 900; cursor: pointer; }
     .rc-btn:active { background: #fff0f5; }
+    .rc-state { margin: -6px 0 12px; text-align: center; font-size: 11px; font-weight: bold; color: #10b981; }
+    .rc-state.off { color: #b8a8b8; }
     .rc-status { text-align: center; padding: 28px 10px; font-size: 14px; font-weight: bold; color: var(--muted); line-height: 1.7; }
     .rc-status b { display: block; font-size: 30px; margin-bottom: 6px; }
     .rc-head { display: flex; gap: 8px; }
@@ -338,6 +347,7 @@
             <label class="rc-btn" for="rcInput">📷 レシートを撮る</label>
             <label class="rc-btn" for="rcPick">🖼 写真から</label>
           </div>
+          <div class="rc-state" id="rcState" hidden></div>
           <input type="file" id="rcInput" accept="image/*" capture="environment" hidden>
           <input type="file" id="rcPick" accept="image/*" multiple hidden>
           <input type="file" id="rcAddInput" accept="image/*" capture="environment" hidden>
@@ -886,7 +896,17 @@
       card.classList.remove("show");
     });
 
+    // レシートを読むおうちのパソコンの状態（読み込みのたびに更新）
+    function renderWorkerState() {
+      const el = $("rcState");
+      if (!master || typeof master.worker !== "boolean") { el.hidden = true; return; }
+      el.hidden = false;
+      el.classList.toggle("off", !master.worker);
+      el.textContent = master.worker ? "● レシートの読み取りOK" : "● おうちのパソコンがお休み中。レシートは手入力でね";
+    }
+
     function renderAll() {
+      renderWorkerState();
       renderResult();
       renderBudget();
       renderCategories();
