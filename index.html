@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <title>名和家の家計簿！</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
   <style>
     :root{
       --ink: #444; --muted: #888;
@@ -59,6 +61,25 @@
       .cat-chip span { padding: 9px 3px; font-size: 12px; }
     }
     .cat-chip.flash span { animation: flash .6s ease; }
+    /* 分類を選び直してほしいとき（同じお店でもう1件・いくつかの分類で使うお店） */
+    .cat-grid.pick .cat-chip span { animation: pick 1.2s ease 2; }
+    @keyframes pick { 0%,100%{ border-color: #eee; } 50%{ border-color: var(--accent-pink); box-shadow: 0 0 0 3px #ffe0ec; } }
+
+    /* 選んだ分類の残り予算と説明（説明は Category_Master のメモ欄） */
+    .cat-info { margin: -6px 0 14px; padding: 9px 12px; border-radius: 14px; background: #fff; border: 1.5px solid #ffe0ec; }
+    .cat-info[hidden] { display: none; }
+    .cat-remain { font-size: 13px; font-weight: 900; color: #10b981; }
+    .cat-remain.over { color: var(--accent-pink); }
+    .cat-remain small { font-size: 10.5px; font-weight: bold; color: var(--muted); margin-left: 4px; }
+    .cat-remain .hint { display: block; margin-top: 2px; font-size: 11px; color: var(--accent-pink); }
+    .cat-note { margin-top: 3px; font-size: 11px; line-height: 1.45; color: var(--muted); font-weight: bold; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .cat-note:empty { display: none; }
+
+    /* 同じお店でもう1件 */
+    .again-btn { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0 6px; width: 100%; margin: 0 0 12px; padding: 9px 12px; border-radius: 14px; border: 1.5px dashed #ffc6dc; background: #fff0f5; color: var(--accent-pink); font-size: 14px; font-weight: 900; cursor: pointer; }
+    .again-btn[hidden] { display: none; }
+    .again-btn small { font-size: 10.5px; color: var(--muted); font-weight: bold; }
+    .again-btn:active { background: #ffe0ec; }
     @keyframes flash { 0%{ transform: scale(1); } 40%{ transform: scale(1.12); } 100%{ transform: scale(1); } }
 
     /* 自由記入欄の予測候補 */
@@ -259,13 +280,15 @@
 
       <div class="card">
         <form id="f">
+          <button type="button" class="again-btn" id="againBtn" hidden>🏪 <span id="againName"></span> でもう1件<small>分類ごとに分けて入れるとき</small></button>
           <label>金額</label>
           <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
 
-          <label>分類（食費等）</label>
+          <label>分類</label>
           <div class="cat-grid" id="category"></div>
+          <div class="cat-info" id="catInfo" hidden><div class="cat-remain" id="catRemain"></div><div class="cat-note" id="catNote"></div></div>
 
-          <label>カテゴリ（自由記入欄）</label>
+          <label>お店・メモ</label>
           <div class="memo-wrap">
             <input name="memo" id="memo" placeholder="例：アオキ、ツルハ、鬼がらし" autocomplete="off">
             <div class="ac-list" id="acList"></div>
@@ -371,10 +394,10 @@
       <label>金額</label>
       <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" id="eAmount" type="tel" inputmode="numeric" placeholder="0" required></div>
 
-      <label>分類（食費等）</label>
+      <label>分類</label>
       <div class="cat-grid" id="eCategory"></div>
 
-      <label>カテゴリ（自由記入欄）</label>
+      <label>お店・メモ</label>
       <div class="memo-wrap">
         <input id="eMemo" placeholder="例：アオキ、ツルハ、鬼がらし" autocomplete="off">
         <div class="ac-list" id="eAcList"></div>
@@ -577,6 +600,7 @@
       if (!cats.length) return;
       const current = cats.includes(selectedCategory()) ? selectedCategory() : cats[0];
       renderCategoryChips("category", cats, current);
+      renderCatInfo();
     }
 
     function selectedCategory(grid = "category") {
@@ -592,7 +616,60 @@
         const chip = r.closest(".cat-chip");
         chip.classList.remove("flash"); void chip.offsetWidth; chip.classList.add("flash");
       }
+      if (grid === "category") renderCatInfo();
     }
+
+    // 分類ボタンを光らせて、選び直してもらう
+    function promptCategory(grid, hint) {
+      const g = $(grid);
+      g.classList.remove("pick"); void g.offsetWidth; g.classList.add("pick");
+      if (grid === "category") renderCatInfo(hint);
+    }
+
+    // ---------- 分類ごとの残り予算 ----------
+
+    // サーバーの実績に、まだ反映されていない記録（送信待ち・送信直後）を足して残りを出す。
+    // 変動費は今月、特別費・予備費は今年で数える（年36万円の枠として管理するため）。
+    function catStatus(name) {
+      const c = ((master && master.cats) || []).find(x => x.name === name);
+      if (!c) return null;
+      const today = ymd(new Date());
+      // 年の枠は数え始めの日（yearFrom）以降・今年の分。月は今月の分
+      const inSpan = d => c.yearly
+        ? d.slice(0, 4) === today.slice(0, 4) && d >= String(c.yearFrom || today.slice(0, 4) + "-01-01")
+        : d.slice(0, 7) === today.slice(0, 7);
+      const pending = [...outbox, ...justSent]
+        .filter(r => r.category === name && inSpan(String(r.date || "")))
+        .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      const budget = Number(c.yearly ? c.yearBudget : c.budget) || 0;
+      const spent = (Number(c.yearly ? c.yearSpent : c.spent) || 0) + pending;
+      const rest = budget - spent;
+      const span = c.yearly ? "今年" : "今月";
+      let text = "";
+      if (budget > 0) text = rest >= 0 ? `${name}：${span}あと ¥${yen(rest)}` : `${name}：${span} ¥${yen(-rest)} オーバー`;
+      // 年の枠の説明。数え始めた年は日割りなので、その旨を出す
+      let frame = "";
+      if (c.yearly && budget > 0) {
+        const from = String(c.yearFrom || "");
+        frame = Number(c.yearFull) > budget && from
+          ? `（${Number(from.slice(5, 7))}/${Number(from.slice(8, 10))}〜12/31 の日割り ¥${yen(budget)}）`
+          : `（年 ¥${yen(budget)} の枠）`;
+      }
+      return { text, over: budget > 0 && rest < 0, note: c.note || "", frame };
+    }
+
+    function renderCatInfo(hint) {
+      const s = catStatus(selectedCategory());
+      const box = $("catInfo");
+      if (!s || (!s.text && !s.note && !hint)) { box.hidden = true; return; }
+      const remain = $("catRemain");
+      remain.className = "cat-remain" + (s.over ? " over" : "");
+      remain.innerHTML = esc(s.text) + (s.frame ? `<small>${esc(s.frame)}</small>` : "")
+        + (hint ? `<span class="hint">${esc(hint)}</span>` : "");
+      $("catNote").textContent = s.note;
+      box.hidden = false;
+    }
+    $("category").addEventListener("change", () => renderCatInfo());
 
     function renderHistory() {
       // シートにある記録（IDあり）はタップで修正できる
@@ -731,12 +808,26 @@
       save(KEY_MEMOS, memoStats);
     }
 
-    // 今ある分類ボタンの中で、その入力値に最も多く使われた分類
-    function topCategory(memo) {
+    // 今ある分類ボタンの中で、その入力値に使われた分類（多い順）
+    function memoCategories(memo) {
       const cats = memoStats.memos[memo];
       const current = (master && master.categories) || [];
-      if (!cats) return "";
-      return Object.entries(cats).filter(([c]) => current.includes(c)).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+      if (!cats) return [];
+      return Object.entries(cats).filter(([c]) => current.includes(c)).sort((a, b) => b[1] - a[1]);
+    }
+
+    // 最も多く使われた分類
+    function topCategory(memo) {
+      return memoCategories(memo)[0]?.[0] || "";
+    }
+
+    // いくつかの分類で使っているお店（スーパーで食べ物と日用品を買うなど）。
+    // 分類ごとに分けて入力するルールなので、こういうお店では分類を自動で選ばない
+    function isMixedMemo(memo) {
+      const list = memoCategories(memo);
+      if (list.length < 2) return false;
+      const [top, second] = [list[0][1], list[1][1]];
+      return second >= 2 && second >= top * 0.15;
     }
 
     // ひらがな・カタカナ・全角半角・大文字小文字の違いを無視して比べる
@@ -755,7 +846,9 @@
         .sort((a, b) => a.rank - b.rank || b.count - a.count)
         .slice(0, 6);
       list.innerHTML = scored.map(x => {
-        const cat = topCategory(x.m);
+        const cat = isMixedMemo(x.m)
+          ? memoCategories(x.m).slice(0, 2).map(([c]) => c).join("・") + "など"
+          : topCategory(x.m);
         return `<div class="ac-item" data-memo="${esc(x.m)}"><span>${esc(x.m)}</span>${cat ? `<small>${esc(cat)}</small>` : ""}</div>`;
       }).join("");
       list.classList.toggle("show", scored.length > 0);
@@ -775,8 +868,13 @@
         if (!item) return;
         const memo = item.dataset.memo;
         input.value = memo;
-        const cat = topCategory(memo);
-        if (cat) selectCategory(cat, true, grid);
+        input.dispatchEvent(new Event("memo-picked"));
+        if (isMixedMemo(memo)) {
+          promptCategory(grid, "いくつかの分類で使うお店だよ。分類を選んでね");
+        } else {
+          const cat = topCategory(memo);
+          if (cat) selectCategory(cat, true, grid);
+        }
         list.classList.remove("show");
         input.blur();
       });
@@ -829,13 +927,37 @@
       countMemo(rec.memo, rec.category);
 
       const cat = rec.category;
+      // 「同じお店でもう1件」用に、お店と日付（空欄なら空欄のまま）を覚えておく
+      lastEntry = rec.memo ? { memo: rec.memo, date: $("date").value } : null;
       e.target.reset();
       selectCategory(cat);
       $("acList").classList.remove("show");
+      $("againName").textContent = lastEntry ? lastEntry.memo : "";
+      $("againBtn").hidden = !lastEntry;
       renderHistory();
       renderDateButtons();
+      renderCatInfo();
       flush();
     });
+
+    // ---------- 同じお店でもう1件 ----------
+
+    // 同じお店で食べ物と日用品を買ったときなど、分類ごとに分けて入力するためのボタン。
+    // お店と日付をそのまま戻し、金額と分類だけ入れ直してもらう
+    let lastEntry = null;
+    $("againBtn").addEventListener("click", () => {
+      if (!lastEntry) return;
+      $("memo").value = lastEntry.memo;
+      $("date").value = lastEntry.date;
+      $("againBtn").hidden = true;
+      renderDateButtons();
+      promptCategory("category", "さっきと違う分類を選んでね");
+      $("f").amount.focus();
+    });
+    // 別のお店を入れ始めたら、ボタンは引っ込める
+    const hideAgain = () => { $("againBtn").hidden = true; };
+    $("memo").addEventListener("input", hideAgain);
+    $("memo").addEventListener("memo-picked", hideAgain);
 
     let flushing = false;
     async function flush() {
@@ -854,7 +976,10 @@
             save(KEY_OUTBOX, outbox);
             justSent.unshift({ ...rec, sentAt: Date.now() });
             sentAny = true;
-            showToast();
+            // 登録した分類の残り予算を知らせる（予算のない分類はいつもの言葉）
+            const st = catStatus(rec.category);
+            showToast("登録完了！", st && st.text ? st.text : undefined);
+            renderCatInfo();
           } catch (err) {
             // 通信が不調なら残りは次の機会にまとめて送る
             outbox.forEach(r => { r.failed = true; });
