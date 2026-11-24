@@ -181,12 +181,31 @@
     .account-line button { border: none; background: none; padding: 4px; color: #b8a8b8; font-size: 11px; font-weight: bold; text-decoration: underline; cursor: pointer; }
 
     /* レシート読み取り */
-    .rc-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: 0 0 12px; height: 44px; border-radius: 14px; border: 1.5px solid #ffe0ec; background: #fff; color: var(--accent-pink); font-size: 14px; font-weight: 900; cursor: pointer; }
+    .rc-btns { display: flex; gap: 8px; margin: 0 0 12px; }
+    .rc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; margin: 0; height: 44px; border-radius: 14px; border: 1.5px solid #ffe0ec; background: #fff; color: var(--accent-pink); font-size: 14px; font-weight: 900; cursor: pointer; }
     .rc-btn:active { background: #fff0f5; }
     .rc-status { text-align: center; padding: 28px 10px; font-size: 14px; font-weight: bold; color: var(--muted); line-height: 1.7; }
     .rc-status b { display: block; font-size: 30px; margin-bottom: 6px; }
     .rc-head { display: flex; gap: 8px; }
     .rc-head > div { flex: 1; min-width: 0; }
+    .rc-ask { margin: 12px 0 8px; padding: 10px 12px; border-radius: 14px; background: #fff0f5; font-size: 12.5px; font-weight: bold; color: #8a6a7a; line-height: 1.5; }
+    .rc-ask b { display: block; font-size: 14px; color: var(--accent-pink); }
+    .rc-group { margin-bottom: 10px; border-radius: 16px; background: #fff; border: 1.5px solid #ffe0ec; overflow: hidden; }
+    .rc-group.need { border-color: var(--accent-pink); border-style: dashed; }
+    .rc-ghead { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: #fff7fa; font-size: 13px; font-weight: 900; color: #666; cursor: pointer; }
+    .rc-group.need .rc-ghead { color: var(--accent-pink); }
+    .rc-ghead small { font-size: 11px; color: var(--muted); font-weight: bold; margin-left: 4px; }
+    .rc-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-top: 1px solid #fff0f5; cursor: pointer; transition: background .12s; }
+    .rc-check { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 7px; border: 1.5px solid #e6d6de; background: #fff; color: #fff; font-size: 13px; font-weight: 900; line-height: 17px; text-align: center; }
+    .rc-row.sel { background: #ffe9f2; }
+    .rc-row.sel .rc-check { background: var(--accent-pink); border-color: var(--accent-pink); }
+    .rc-move { position: sticky; bottom: 0; z-index: 3; margin: 0 -6px; padding: 10px; border-radius: 18px; background: rgba(255,255,255,0.97); border: 2px solid var(--accent-pink); box-shadow: 0 -6px 18px rgba(255,126,179,0.18); }
+    .rc-move[hidden] { display: none; }
+    .rc-move-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 900; color: var(--accent-pink); }
+    .rc-move-head button { border: none; background: #fff0f5; color: #a98; border-radius: 10px; padding: 5px 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .rc-chips button { flex: 1 1 auto; min-width: 0; padding: 9px 8px; border-radius: 999px; border: 1.5px solid #ffc6dc; background: #fff; color: #666; font-size: 12.5px; font-weight: bold; cursor: pointer; }
+    .rc-chips button:active { background: var(--accent-pink); color: #fff; }
     .rc-items { margin: 4px 0 10px; border-top: 1px solid #ffe0ec; }
     .rc-item { display: flex; align-items: center; gap: 6px; padding: 7px 0; border-bottom: 1px solid #fff0f5; }
     .rc-name { flex: 1; min-width: 0; font-size: 12.5px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -315,9 +334,14 @@
 
       <div class="card">
         <form id="f">
-          <label class="rc-btn" for="rcInput">📷 レシートを読む</label>
+          <div class="rc-btns">
+            <label class="rc-btn" for="rcInput">📷 レシートを撮る</label>
+            <label class="rc-btn" for="rcPick">🖼 写真から</label>
+          </div>
           <input type="file" id="rcInput" accept="image/*" capture="environment" hidden>
+          <input type="file" id="rcPick" accept="image/*" multiple hidden>
           <input type="file" id="rcAddInput" accept="image/*" capture="environment" hidden>
+          <input type="file" id="rcAddPick" accept="image/*" multiple hidden>
           <button type="button" class="again-btn" id="againBtn" hidden>🏪 <span id="againName"></span> でもう1件<small>分類ごとに分けて入れるとき</small></button>
           <label>金額</label>
           <div class="amount-wrapper"><span class="currency">¥</span><input name="amount" type="tel" inputmode="numeric" placeholder="0" required></div>
@@ -465,12 +489,22 @@
         <div><label>日付</label><input id="rcDate" type="date" class="date-input"></div>
         <div><label>レシートの合計</label><input id="rcTotal" type="tel" inputmode="numeric" placeholder="0"></div>
       </div>
-      <label style="margin-top:12px;">明細（分類はタップで変えられるよ）</label>
-      <div class="rc-items" id="rcItems"></div>
-      <label>分類ごとの登録額</label>
+      <div class="rc-ask" id="rcAsk"><b>この分け方でいい？</b>違うときは、品物をタップして選んで（いくつでも）、下に出る分類を押すと移せるよ。まとまりの見出しを押すと、まるごと選べるよ</div>
+      <div id="rcGroups"></div>
+      <div class="rc-move" id="rcMove" hidden>
+        <div class="rc-move-head"><span id="rcSelN"></span><button type="button" id="rcSelClear">選ぶのをやめる</button></div>
+        <div class="rc-chips" id="rcChips"></div>
+      </div>
+      <label style="margin-top:12px;">分類ごとの登録額</label>
       <div class="rc-sum" id="rcSum"></div>
       <div class="rc-warn" id="rcWarn"></div>
-      <label class="rc-add" id="rcAdd" for="rcAddInput">📷 長いレシートは、続きを撮り足す<small id="rcAddNote"></small></label>
+      <div id="rcAdd">
+        <div class="rc-btns" style="margin:12px 0 0;">
+          <label class="rc-add" for="rcAddInput" style="flex:1;margin:0;">📷 続きを撮り足す</label>
+          <label class="rc-add" for="rcAddPick" style="flex:1;margin:0;">🖼 写真から足す</label>
+        </div>
+        <div style="text-align:center;margin-top:4px;font-size:10.5px;font-weight:bold;color:var(--muted);" id="rcAddNote"></div>
+      </div>
       <div class="sheet-actions">
         <button type="button" class="sheet-del" id="rcCancel">やめる</button>
         <button type="button" class="sheet-save" id="rcSave">登録する</button>
@@ -1279,24 +1313,24 @@
       }
     }
 
-    $("rcInput").addEventListener("change", async e => {
-      const file = e.target.files && e.target.files[0];
+    // 選んだ写真を縮小する（写真からは、長いレシートを分けて撮った数枚をまとめて選べる）
+    async function rcTake(e, base) {
+      const files = [...(e.target.files || [])];
       e.target.value = "";
-      if (!file) return;
-      let image;
-      try { image = await shrinkImage(file); } catch (err) { alert("写真を読み込めませんでした。もう一度撮ってね。"); return; }
-      rcRead([image]);
-    });
-
+      if (!files.length) return;
+      const room = RC_MAX_PHOTOS - base.length;
+      if (room <= 0) return;
+      if (files.length > room) alert(`写真は1枚のレシートにつき ${RC_MAX_PHOTOS}枚までだよ。最初の ${room}枚を使うね`);
+      const images = [];
+      try { for (const file of files.slice(0, room)) images.push(await shrinkImage(file)); }
+      catch (err) { alert("写真を読み込めませんでした。もう一度選んでね。"); return; }
+      rcRead([...base, ...images]);
+    }
+    $("rcInput").addEventListener("change", e => rcTake(e, []));
+    $("rcPick").addEventListener("change", e => rcTake(e, []));
     // 撮り足し：今までの写真と合わせて、もう一度まとめて読み直す
-    $("rcAddInput").addEventListener("change", async e => {
-      const file = e.target.files && e.target.files[0];
-      e.target.value = "";
-      if (!file || !rcImages.length || rcImages.length >= RC_MAX_PHOTOS) return;
-      let image;
-      try { image = await shrinkImage(file); } catch (err) { alert("写真を読み込めませんでした。もう一度撮ってね。"); return; }
-      rcRead([...rcImages, image]);
-    });
+    $("rcAddInput").addEventListener("change", e => { if (rcImages.length) rcTake(e, rcImages); });
+    $("rcAddPick").addEventListener("change", e => { if (rcImages.length) rcTake(e, rcImages); });
 
     function rcRender(result) {
       const cats = (master && master.categories) || [];
@@ -1306,21 +1340,60 @@
       $("rcStore").value = result.store || "";
       $("rcDate").value = result.date || ymd(new Date());
       $("rcTotal").value = result.total || "";
-      $("rcItems").innerHTML = rc.items.map((it, i) => `
-        <div class="rc-item"><span class="rc-name">${esc(it.name)}</span><span class="rc-price">${it.price < 0 ? "−" : ""}¥${yen(Math.abs(it.price))}</span>
-          <select data-i="${i}" class="${it.category ? "" : "need"}"><option value="">えらぶ</option>${cats.map(c => `<option value="${esc(c)}"${c === it.category ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`).join("");
+      rc.sel = new Set();
+      $("rcChips").innerHTML = cats.map(c => `<button type="button" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+      rcRenderGroups();
       $("rcWait").hidden = true; $("rcBody").hidden = false;
       $("rcAdd").hidden = rcImages.length >= RC_MAX_PHOTOS;
-      $("rcAddNote").textContent = rcImages.length > 1 ? `いま ${rcImages.length}枚。重なった行は1回だけ数えるよ` : "上から順に、少し重ねて撮ってね";
+      $("rcAddNote").textContent = rcImages.length > 1 ? `いま ${rcImages.length}枚。重なった行は1回だけ数えるよ` : "長いレシートは、上から順に少し重ねて足してね";
       rcUpdate();
     }
-    $("rcItems").addEventListener("change", e => {
-      const sel = e.target.closest("select[data-i]");
-      if (!sel || !rc) return;
-      rc.items[Number(sel.dataset.i)].category = sel.value;
-      sel.classList.toggle("need", !sel.value);
+    // 分類ごとのまとまり。分類を決めきれなかった品物は「分類をえらんでね」として先頭に出す
+    function rcRenderGroups() {
+      const cats = (master && master.categories) || [];
+      const order = ["", ...cats];
+      const groups = order.map(c => ({ c, idx: rc.items.map((it, i) => i).filter(i => rc.items[i].category === c) })).filter(g => g.idx.length);
+      $("rcGroups").innerHTML = groups.map(g => {
+        const sum = g.idx.reduce((a, i) => a + rc.items[i].price, 0);
+        return `<div class="rc-group${g.c ? "" : " need"}">
+          <div class="rc-ghead" data-group="${esc(g.c)}"><span>${g.c ? esc(g.c) : "分類をえらんでね"}<small>${g.idx.length}品</small></span><span>¥${yen(sum)}</span></div>
+          ${g.idx.map(i => { const it = rc.items[i]; return `<div class="rc-row${rc.sel.has(i) ? " sel" : ""}" data-i="${i}"><span class="rc-check">✓</span><span class="rc-name">${esc(it.name)}</span><span class="rc-price">${it.price < 0 ? "−" : ""}¥${yen(Math.abs(it.price))}</span></div>`; }).join("")}
+        </div>`;
+      }).join("");
+      const n = rc.sel.size;
+      $("rcMove").hidden = n === 0;
+      $("rcSelN").textContent = `${n}品を選んでいるよ。移す先は？`;
+      $("rcAsk").hidden = n > 0;
       rcUpdate();
+    }
+
+    // 品物をタップで選ぶ／見出しをタップでまとまりごと選ぶ
+    $("rcGroups").addEventListener("click", e => {
+      if (!rc) return;
+      const row = e.target.closest(".rc-row[data-i]");
+      if (row) {
+        const i = Number(row.dataset.i);
+        rc.sel.has(i) ? rc.sel.delete(i) : rc.sel.add(i);
+        rcRenderGroups();
+        return;
+      }
+      const head = e.target.closest(".rc-ghead");
+      if (head) {
+        const idx = rc.items.map((it, i) => i).filter(i => rc.items[i].category === head.dataset.group);
+        const all = idx.every(i => rc.sel.has(i));
+        idx.forEach(i => all ? rc.sel.delete(i) : rc.sel.add(i));
+        rcRenderGroups();
+      }
     });
+    // 分類を押すと、選んだ品物をまとめて移す
+    $("rcChips").addEventListener("click", e => {
+      const b = e.target.closest("button[data-cat]");
+      if (!b || !rc || !rc.sel.size) return;
+      rc.sel.forEach(i => { rc.items[i].category = b.dataset.cat; });
+      rc.sel.clear();
+      rcRenderGroups();
+    });
+    $("rcSelClear").addEventListener("click", () => { if (rc) { rc.sel.clear(); rcRenderGroups(); } });
     $("rcTotal").addEventListener("input", rcUpdate);
 
     // 分類ごとの登録額。明細の小計を分類ごとに足し、レシートの合計に合うように税・値引きを按分する
@@ -1346,7 +1419,7 @@
       $("rcSum").innerHTML = out.map(([c, v]) => `<div class="rc-sum-row"><span>${esc(c)}</span><span>¥${yen(v)}</span></div>`).join("")
         + `<div class="rc-sum-row total"><span>合計</span><span>¥${yen(out.reduce((a, [, v]) => a + v, 0))}</span></div>`;
       const warns = [];
-      if (missing) warns.push(`分類を選んでいない明細が ${missing}件あるよ`);
+      if (missing) warns.push(`分類をえらんでいない品物が ${missing}品あるよ`);
       if (!total) warns.push("レシートの合計が読めなかったよ。合計を入れると、税や値引きを合わせて計算するよ");
       else if (raw > 0 && Math.abs(total - raw) / total > 0.12) warns.push(`明細の合計（¥${yen(raw)}）とレシートの合計（¥${yen(total)}）が大きく違うよ。読み落としがないか見てね`);
       $("rcWarn").innerHTML = warns.map(esc).join("<br>");
