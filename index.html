@@ -131,6 +131,23 @@
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast img { width: 70px; height: 70px; object-fit: contain; }
 
+    /* ログイン画面。ログインを確かめるまでは、入力画面も分析も出さない */
+    #view-login { display: none; height: 100svh; overflow-y: auto; padding: 20px; }
+    body.signed-out #view-login { display: flex; align-items: center; justify-content: center; }
+    body.signed-out #view-input, body.signed-out #view-dashboard, body.signed-out .bottom-tab-bar,
+    body.booting #view-input, body.booting #view-dashboard, body.booting .bottom-tab-bar { display: none !important; }
+    .login-box { width: 100%; max-width: 360px; text-align: center; background: var(--card-bg); border: var(--border-thick) solid #fff; border-radius: 28px; padding: 30px 22px 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
+    .login-icon { width: 120px; height: 120px; object-fit: contain; opacity: .8; }
+    .login-lead { font-size: 13px; font-weight: bold; color: var(--muted); margin: 10px 0 18px; }
+    .login-msg { display: none; font-size: 12px; font-weight: bold; color: var(--accent-pink); background: #fff; border: 1.5px dashed #ffc6dc; border-radius: 14px; padding: 10px 12px; margin: 0 0 16px; line-height: 1.5; }
+    .login-msg.show { display: block; }
+    .login-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 54px; border-radius: 18px; border: 2px solid #ffe0ec; background: #fff; color: #555; font-size: 16px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 rgba(255, 126, 179, 0.15); }
+    .login-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(255, 126, 179, 0.15); }
+    .login-btn:disabled { opacity: .6; }
+    .login-btn svg { width: 22px; height: 22px; flex: 0 0 auto; }
+    .account-line { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 26px; font-size: 11px; color: #b8a8b8; }
+    .account-line button { border: none; background: none; padding: 4px; color: #b8a8b8; font-size: 11px; font-weight: bold; text-decoration: underline; cursor: pointer; }
+
     /* ▼ 追加：タブ切り替えとダッシュボード用のCSS ▼ */
     .bottom-tab-bar {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
@@ -145,16 +162,79 @@
     .tab-icon { font-size: 22px; display: block; margin-bottom: 4px; }
 
     #view-input { display: block; height: 100%; }
-    /* 分析は裏で先に読み込むため、使わない間は画面の外に置く（display:none や visibility:hidden だと幅が崩れる） */
-    #view-dashboard { position: absolute; left: -20000px; top: 0; width: 100vw; max-width: 500px; height: 100%; margin: 0 auto; padding-bottom: 65px; pointer-events: none; }
-    #view-dashboard.show { position: relative; left: auto; width: auto; pointer-events: auto; }
-    #dashHost { position: relative; height: 100%; }
-    #dashHost iframe { width: 100%; height: 100%; border: none; background: transparent; }
-    .dash-loading { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font-size: 13px; font-weight: bold; color: var(--muted); }
+    /* 分析は裏でデータだけ先に読み込み、タブを開いたときに描く */
+    #view-dashboard { display: none; position: relative; height: 100%; }
+    #view-dashboard.show { display: block; }
+    .dash-loading { padding: 40% 0 0; text-align: center; font-size: 13px; font-weight: bold; color: var(--muted); }
     .dash-updating { display: none; position: absolute; right: 12px; top: 8px; z-index: 5; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 11px; font-weight: bold; color: var(--accent-pink); pointer-events: none; }
+
+    /* 分析画面（以前の GAS の分析画面と同じ見た目） */
+    .dash-page { height: 100svh; overflow-y: auto; overflow-x: hidden; background: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; color: #333; }
+    .dash-inner { max-width: 500px; margin: 0 auto; padding: 10px 10px 85px; }
+    .d-title { text-align: center; color: #333; font-size: 18px; margin: 10px 0 5px; }
+    .d-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .d-card h3 { font-size: 14px; margin-top: 0; color: #c71585; }
+    .d-card h3 small { font-size: 10px; font-weight: normal; color: #888; }
+    .d-btn { display: block; width: 100%; padding: 10px; background: #ff69b4; color: white; text-align: center; border-radius: 5px; cursor: pointer; border: none; font-size: 14px; margin-bottom: 15px; font-weight: bold; }
+    .d-btn:active { background: #ff1493; }
+    .d-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .d-table th, .d-table td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+    .d-table th { background-color: #f8f8f8; }
+    .d-table .d-amount { text-align: right; font-weight: bold; color: #c71585; }
+    .d-filter label { font-size: 12px; font-weight: bold; color: #c71585; padding: 0; margin: 0; }
+    .d-filter select, .d-filter input { width: 100%; height: auto; padding: 8px; border: 2px solid #ffb6c1; border-radius: 5px; margin: 5px 0 0; font-size: 14px; outline: none; color: #444; font-weight: bold; background: #fff; }
+    .d-dates { display: flex; gap: 10px; margin-top: 5px; align-items: center; }
+    .d-dates span { color: #c71585; font-weight: bold; }
+    .d-month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .d-month-nav button { background: #ffe0ec; border: none; padding: 5px 15px; border-radius: 15px; color: #c71585; font-weight: bold; font-size: 16px; cursor: pointer; }
+    .d-month-nav span { font-size: 16px; font-weight: bold; color: #c71585; }
+    .d-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #fff; border: 1px solid #ffe0ec; border-radius: 5px; overflow: hidden; }
+    .d-cal-head { text-align: center; font-size: 10px; font-weight: bold; color: #ff69b4; padding: 5px 0; background: #fff0f5; }
+    .d-cal-cell { min-height: 45px; display: flex; flex-direction: column; padding: 2px 4px; border-top: 1px solid #ffe0ec; border-right: 1px solid #ffe0ec; cursor: pointer; background: #fff; transition: background 0.2s; }
+    .d-cal-cell:nth-child(7n) { border-right: none; }
+    .d-cal-cell.empty { background: #fafafa; cursor: default; }
+    .d-cal-cell.has-data { background: #fffafc; }
+    .d-cal-day { font-size: 10px; color: #888; }
+    .d-cal-amount { font-size: 9px; color: #c71585; text-align: right; margin-top: auto; font-weight: bold; letter-spacing: -0.5px; }
+    .d-cal-zero { font-size: 10px; color: #10b981; text-align: center; font-weight: 900; margin-top: auto; margin-bottom: 1px; background: #ecfdf5; border-radius: 4px; padding: 2px 0; border: 1px solid #a7f3d0; }
+    .d-cal-cell.selected { background: #ffb6c1 !important; color: white !important; }
+    .d-cal-cell.selected .d-cal-day, .d-cal-cell.selected .d-cal-amount, .d-cal-cell.selected .d-cal-zero { color: white !important; background: transparent; border: none; }
+    .d-sum-list { margin: 0; padding: 0; list-style: none; }
+    .d-sum-total { font-weight: 900; color: #c71585; font-size: 16px; border-bottom: 2px solid #ffb6c1; padding-bottom: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; }
+    .d-sum-wrap { border-bottom: 1px dashed #ffe0ec; }
+    .d-sum-wrap:last-child { border-bottom: none; }
+    .d-sum-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; font-size: 14px; color: #555; cursor: pointer; }
+    .d-sum-item:active { background: #fffafc; }
+    .d-sum-amount { font-weight: bold; }
+    .d-sum-detail { display: none; background: #fffafc; padding: 8px; border-radius: 5px; margin-bottom: 5px; border: 1px solid #ffe0ec; }
+    .d-sum-wrap.open .d-sum-detail { display: block; }
+    .d-sum-wrap.open .d-toggle { transform: rotate(180deg); }
+    .d-controls { display: flex; gap: 5px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #ffb6c1; }
+    .d-sort { flex: 1; text-align: center; font-size: 10px; color: #888; background: #fff; border: 1px solid #ddd; padding: 5px 0; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+    .d-sort.active { background: #fff0f5; color: #c71585; border-color: #ffb6c1; font-weight: bold; }
+    .d-detail-item { display: flex; justify-content: space-between; font-size: 12px; color: #666; padding: 6px 0; border-bottom: 1px dotted #f0f0f0; }
+    .d-detail-item:last-child { border-bottom: none; }
+    .d-detail-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 10px; }
+    .d-detail-amount { font-weight: bold; color: #c71585; }
+    .d-toggle { font-size: 10px; color: #ffb6c1; margin-left: 5px; display: inline-block; transition: transform 0.2s; }
+    .d-empty { text-align: center; color: #888; padding: 10px; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="booting">
+
+  <div id="view-login">
+    <div class="login-box">
+      <img src="icon_trans.png" class="login-icon" alt="" onerror="this.style.display='none'">
+      <h1 class="title-main">名和家の家計簿！</h1>
+      <p class="login-lead">Googleアカウントでログインしてね</p>
+      <p class="login-msg" id="loginMsg"></p>
+      <button type="button" class="login-btn" id="loginBtn">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Googleでログイン
+      </button>
+    </div>
+  </div>
 
   <div id="view-input">
     <div class="page">
@@ -211,14 +291,62 @@
         <div class="section-title">最近の記録<small>タップで修正できるよ</small></div>
         <div id="hList"></div>
         <button type="button" class="more-btn" id="moreBtn" hidden>さらに表示</button>
+        <div class="account-line"><span id="accountEmail"></span><button type="button" id="logoutBtn">ログアウト</button></div>
       </div>
     </div>
   </div>
 
   <div id="view-dashboard">
-    <!-- 分析は入力画面が表示されたあとに裏で先に読み込み、記録を変えたときも裏で読み直す -->
+    <!-- 分析のデータは入力画面が表示されたあとに裏で先に読み込み、記録を変えたときも裏で読み直す -->
     <div class="dash-updating" id="dashUpdating">最新に更新中…</div>
-    <div id="dashHost"><div class="dash-loading" id="dashLoading">📊 分析を準備中…</div></div>
+    <div class="dash-page">
+      <div class="dash-inner">
+        <h2 class="d-title">家計防衛コックピット</h2>
+        <div class="dash-loading" id="dashLoading">📊 分析を準備中…</div>
+        <div id="dashApp" hidden>
+          <div class="d-card d-filter">
+            <label for="dPeriod">📅 集計期間</label>
+            <select id="dPeriod">
+              <option value="monthly">月別</option>
+              <option value="all">全期間</option>
+              <option value="custom">任意（自由に指定）</option>
+            </select>
+            <div id="dCustom" hidden>
+              <div class="d-dates"><input type="date" id="dFrom"><span>〜</span><input type="date" id="dTo"></div>
+            </div>
+          </div>
+
+          <button type="button" class="d-btn" id="dReset">🔄 グラフのタップ選択を解除</button>
+
+          <div class="d-card" id="dCalSection">
+            <div class="d-month-nav">
+              <button type="button" id="dPrev">◀</button>
+              <span id="dMonth"></span>
+              <button type="button" id="dNext">▶</button>
+            </div>
+            <div class="d-cal" id="dCal"></div>
+          </div>
+
+          <div class="d-card">
+            <h3>支出サマリー <small>(タップで内訳を表示)</small></h3>
+            <div id="dSummary"></div>
+          </div>
+
+          <div class="d-card">
+            <h3>カテゴリ別割合（タップで絞り込み）</h3>
+            <canvas id="dPie"></canvas>
+          </div>
+
+          <div class="d-card">
+            <h3>支出明細リスト</h3>
+            <table class="d-table">
+              <thead><tr><th>日付</th><th>カテゴリ</th><th>メモ</th><th class="d-amount">金額</th></tr></thead>
+              <tbody id="dTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="bottom-tab-bar">
@@ -266,7 +394,12 @@
   <div class="toastWrap"><div class="toast" id="tst"><img src="kuromi.png" onerror="this.src='https://img.icons8.com/bubbles/100/000000/heart-with-pulse.png'"><div><div id="tstTitle" style="font-weight:900; font-size:20px; color:var(--accent-pink);">登録完了！</div><div id="tstSub" style="font-size:12px; color:#a0a0b0;">家計簿を更新したよ♪</div></div></div></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby31bFD85uYThxMWBEOptm7OU1ucc4EmZssDbO2Kbm_nUNemLpDgS_dhEZ-7cyCNDzN/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxF8sDUUD9c9NhVTkC0haw8jBNYxZvLzuk7oe7oEUH_TPqdrI8alAlCMPf1ZTa2XpeE/exec";
+    // ログイン（Supabase の Google ログイン）。公開用キーはブラウザに置いてよい種類のキー
+    const SUPABASE_URL = "https://iemjvuurpjdhqniiqqnd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_veee8qJLs23sZ1NYyYZgNQ__bi0aIIa";
+    const SB_STORAGE_KEY = "sb-iemjvuurpjdhqniiqqnd-auth-token";  // supabase-js がログイン情報を保存するキー
+    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
     const messages = ["登録作業、いつもありがとう！","体調は大丈夫？しっかり寝てね","今日も一日、お疲れ様！","無理しないで、ゆっくり休んでね","いつも家計を支えてくれて感謝！","美味しいもの食べてリラックス♪","少しずつ、理想の家計へ！","明日も素敵な一日になりますように","あなたの頑張り、見てるよ","今日も100点！自分を褒めてね"];
 
     // 端末に保存するキー
@@ -305,59 +438,109 @@
     let loadSeq = 0;
     let lastLoadAt = 0;
     let dashStale = false;    // 記録が変わって、分析を読み直す予定がある
-    let dashLive = null;      // 表示できる状態の分析 iframe
-    let dashPending = null;   // 裏で読み込み中の分析 iframe
+    let dashLoading = false;  // 分析のデータを読み込み中
     let dashLoadedAt = 0;
     let dashTimer = null;
     let dashPreloaded = false;
+    let appStarted = false;   // ログインを確かめて入力画面を動かし始めた
+    let authLost = false;     // ログインが切れた（再ログインまで通信しない）
 
     // ---------- 通信 ----------
 
-    // JSONP 1回分。タイムアウトしたら失敗扱いにし、遅れて届いた応答は捨てる
-    function jsonpOnce(url, timeoutMs) {
-      return new Promise((resolve, reject) => {
-        const cb = "cb" + Date.now() + Math.floor(Math.random() * 1e6);
-        const s = document.createElement("script");
-        let done = false;
-        const finish = () => { done = true; clearTimeout(timer); s.remove(); window[cb] = () => { delete window[cb]; }; };
-        window[cb] = d => { if (done) return; finish(); delete window[cb]; resolve(d); };
-        const timer = setTimeout(() => { if (done) return; finish(); reject(new Error("timeout")); }, timeoutMs);
-        s.onerror = () => { if (done) return; finish(); reject(new Error("network")); };
-        s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
-        document.head.appendChild(s);
-      });
+    // ログインが切れた・許可されていないアカウント（通信の失敗とは分けて扱う）
+    class AuthError extends Error {}
+
+    // ログイン情報が端末に残っているか（通信できなくても入力画面を出すための判定）
+    const hasStoredSession = () => { try { return !!localStorage.getItem(SB_STORAGE_KEY); } catch (e) { return false; } };
+
+    // 送る直前に有効なトークンを得る（期限が近ければ supabase-js が更新する）
+    async function getToken() {
+      if (!sb) throw new Error("network");
+      let session = null;
+      try { session = (await sb.auth.getSession()).data.session; } catch (e) {}
+      if (session && session.access_token) return session.access_token;
+      // 端末にログイン情報が残っているのに取れない＝更新の通信に失敗した。ログインし直しではなく通信エラー扱い
+      if (hasStoredSession()) throw new Error("network");
+      throw new AuthError("auth");
     }
 
-    async function jsonp(url, { timeout = 12000, retries = 2 } = {}) {
+    // GAS への通信はすべて POST。トークンは本文に入れる（URL に載せない）。
+    // Cookie を付けない（Google に複数ログインしている端末で失敗するため）。
+    // 独自ヘッダーを付けず FormData で送り、事前確認（OPTIONS）が起きない形にする。
+    async function apiOnce(action, fields, timeoutMs, keepalive) {
+      const token = await getToken();
+      const fd = new FormData();
+      fd.append("action", action);
+      fd.append("token", token);
+      Object.entries(fields).forEach(([k, v]) => fd.append(k, v ?? ""));
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res = await fetch(GAS_URL, { method: "POST", body: fd, credentials: "omit", keepalive, signal: ctrl.signal });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        let j = null;
+        try { j = JSON.parse(text); } catch (e) {}
+        if (!j) throw new Error("bad response");
+        if (j.error === "auth") throw new AuthError("auth");
+        if (j.ok === false || j.error) throw new Error(j.error || "failed");
+        return j;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function api(action, fields = {}, { timeout = 20000, retries = 0, keepalive = false } = {}) {
+      if (authLost) throw new AuthError("auth");
       for (let i = 0; ; i++) {
         try {
-          const d = await jsonpOnce(url, timeout);
-          if (d && d.error) throw new Error(d.error);
-          return d;
+          return await apiOnce(action, fields, timeout, keepalive);
         } catch (e) {
+          if (e instanceof AuthError) { onAuthLost(); throw e; }
           if (i >= retries) throw e;
           await sleep(1000 * (i + 1));
         }
       }
     }
 
-    async function post(fields, timeoutMs = 20000) {
-      const fd = new FormData();
-      Object.entries(fields).forEach(([k, v]) => fd.append(k, v ?? ""));
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-      try {
-        const res = await fetch(GAS_URL, { method: "POST", body: fd, keepalive: true, signal: ctrl.signal });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const text = await res.text();
-        let j = null;
-        try { j = JSON.parse(text); } catch (e) {}
-        if (j && (j.ok === false || j.error)) throw new Error(j.error || "failed");
-        return j;
-      } finally {
-        clearTimeout(timer);
-      }
+    // ---------- ログイン ----------
+
+    function showLogin(message) {
+      document.body.classList.remove("booting");
+      document.body.classList.add("signed-out");
+      $("loginMsg").textContent = message || "";
+      $("loginMsg").classList.toggle("show", !!message);
+      $("loginBtn").disabled = false;
     }
+
+    // GAS がトークンを受け付けなかった：期限切れか、許可されていないアカウント。
+    // 未送信の記録（outbox）は消さずに残し、ログインし直してもらう
+    function onAuthLost() {
+      if (authLost) return;
+      authLost = true;
+      const pending = outbox.length ? `（未送信の記録 ${outbox.length}件は、この端末に残っているよ。ログインすると送るね）` : "";
+      showLogin("ログインの期限が切れたか、このアカウントでは使えません。家族のGoogleアカウントでログインしてね" + pending);
+      if (sb) sb.auth.signOut({ scope: "local" }).catch(() => {});
+    }
+
+    $("loginBtn").addEventListener("click", async () => {
+      if (!sb) { showLogin("読み込みに失敗しました。通信を確認して、ページを開き直してね"); return; }
+      $("loginBtn").disabled = true;
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: "select_account" } }
+      });
+      if (error) showLogin("ログインを始められませんでした。もう一度押してね");
+    });
+
+    $("logoutBtn").addEventListener("click", async () => {
+      const pending = outbox.length ? `\n未送信の記録が ${outbox.length}件あります。端末には残り、次にログインしたときに送ります。` : "";
+      if (!confirm("ログアウトする？" + pending)) return;
+      // 端末に保存した家計簿のデータを消す（未送信の記録は消さない）
+      try { localStorage.removeItem(KEY_MASTER); localStorage.removeItem(KEY_MEMOS); } catch (e) {}
+      if (sb) { try { await sb.auth.signOut({ scope: "local" }); } catch (e) {} }
+      location.replace(location.origin + location.pathname);
+    });
 
     // ---------- 表示 ----------
 
@@ -450,12 +633,12 @@
       btn.textContent = "読み込み中…";
       try {
         const offset = serverHistory().length;
-        const d = await jsonp(`${GAS_URL}?action=history&offset=${offset}&limit=${HISTORY_PAGE}`);
+        const d = await api("history", { offset, limit: HISTORY_PAGE }, { timeout: 12000, retries: 2 });
         const items = (d && d.history) || [];
         olderHistory.push(...items);
         if (items.length < HISTORY_PAGE) historyEnd = true;
       } catch (e) {
-        alert("読み込みに失敗しました。もう一度押してね。");
+        if (!(e instanceof AuthError)) alert("読み込みに失敗しました。もう一度押してね。");
       } finally {
         loadingMore = false;
         btn.disabled = false;
@@ -504,7 +687,7 @@
       const seq = ++loadSeq;
       const startedAt = Date.now();
       try {
-        const d = await jsonp(GAS_URL + "?action=master");
+        const d = await api("master", {}, { timeout: 12000, retries: 2 });
         if (seq !== loadSeq) return;
         master = d;
         save(KEY_MASTER, d);
@@ -518,10 +701,10 @@
         renderAll();
         renderSync(false);
         loadMemoStats();
-        // 入力画面が整ってから、分析を裏で先に読み込む（開いたときにすぐ見せるため）
-        if (!dashPreloaded) { dashPreloaded = true; setTimeout(() => { if (!dashLive && !dashPending) refreshDash(); }, 1500); }
+        // 入力画面が整ってから、分析のデータを裏で先に読み込む（開いたときにすぐ見せるため）
+        if (!dashPreloaded) { dashPreloaded = true; setTimeout(() => { if (!Dash.hasData() && !dashLoading) refreshDash(); }, 1500); }
       } catch (e) {
-        if (seq !== loadSeq) return;
+        if (seq !== loadSeq || e instanceof AuthError) return;
         renderSync(true);
       }
     }
@@ -532,7 +715,7 @@
     async function loadMemoStats(force) {
       if (!force && Date.now() - (memoStats.at || 0) < 60 * 60 * 1000) return;
       try {
-        const d = await jsonp(GAS_URL + "?action=memos", { timeout: 15000, retries: 1 });
+        const d = await api("memos", {}, { timeout: 15000, retries: 1 });
         if (!d || !Array.isArray(d.memos)) return;
         const memos = {};
         d.memos.forEach(m => { if (m && m.m) memos[m.m] = m.cats || {}; });
@@ -656,7 +839,7 @@
 
     let flushing = false;
     async function flush() {
-      if (flushing || !outbox.length) return;
+      if (flushing || !outbox.length || authLost) return;
       flushing = true;
       let sentAny = false;
       try {
@@ -666,7 +849,7 @@
           rec.failed = false;
           renderHistory();
           try {
-            await post({ localId: rec.localId, amount: rec.amount, category: rec.category, method: "", memo: rec.memo, date: rec.date });
+            await api("add", { localId: rec.localId, amount: rec.amount, category: rec.category, method: "", memo: rec.memo, date: rec.date }, { keepalive: true });
             outbox = outbox.filter(r => r.localId !== rec.localId);
             save(KEY_OUTBOX, outbox);
             justSent.unshift({ ...rec, sentAt: Date.now() });
@@ -711,9 +894,10 @@
         renderHistory();
       }
       try {
-        await post({ action: "delete", rowId: id });
+        await api("delete", { rowId: id }, { keepalive: true });
         scheduleDashRefresh();
       } catch (e) {
+        if (e instanceof AuthError) return true;
         alert("削除に失敗しました。");
       }
       load();
@@ -780,7 +964,7 @@
       btn.disabled = true;
       btn.textContent = "保存中…";
       try {
-        await post({ action: "update", rowId: editing.id, ...rec });
+        await api("update", { rowId: editing.id, ...rec }, { keepalive: true });
         // 画面上の記録をすぐ書き換え、裏で予算などを読み直す
         const patch = h => String(h.id) === String(editing.id)
           ? { ...h, ...rec, ymd: date, date: date.slice(5).replace("-", "/") } : h;
@@ -795,46 +979,241 @@
       } catch (err) {
         btn.disabled = false;
         btn.textContent = "保存する";
+        if (err instanceof AuthError) { closeEditor(); return; }
         alert("保存できませんでした。通信状態を確認して、もう一度試してね。");
       }
     });
 
     // ---------- タブ切り替え ----------
 
-    // ---------- 分析タブ（裏で読み込んでおく） ----------
+    // ---------- 分析タブ（データを裏で読み込んでおき、画面内で描く） ----------
+
+    // 分析画面の描画。以前 GAS の分析画面（iframe）でしていたことを、そのままこの画面で行う
+    const Dash = (() => {
+      let rows = null;          // { date: "yyyy/MM/dd", category, amount, memo }
+      let catFilter = null;     // 円グラフでタップした分類
+      let dateFilter = null;    // カレンダーでタップした日
+      let sortState = {};       // サマリーの分類ごとの並び順 { 0: { key: "date", dir: "desc" } }
+      let summary = [];
+      let pie = null;
+      let chartLoading = null;
+      const viewMonth = new Date(); viewMonth.setDate(1);
+      const COLORS = ["#ff99cc", "#ffb366", "#99ccff", "#99ffcc", "#cc99ff", "#ffff99", "#d9d9d9"];
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = src; s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      // グラフの部品は分析を初めて描くときに読み込む（入力画面の表示を遅くしない）
+      function loadChart() {
+        if (window.Chart && window.ChartDataLabels) return Promise.resolve();
+        if (!chartLoading) {
+          chartLoading = loadScript("https://cdn.jsdelivr.net/npm/chart.js@4")
+            .then(() => loadScript("https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"))
+            .catch(e => { chartLoading = null; throw e; });
+        }
+        return chartLoading;
+      }
+
+      const period = () => $("dPeriod").value;
+      const pad = n => String(n).padStart(2, "0");
+      const dateKey = d => d.getFullYear() + "/" + pad(d.getMonth() + 1) + "/" + pad(d.getDate());
+      const toDate = s => new Date(String(s).replace(/\//g, "-") + "T00:00:00");
+
+      function baseRows() {
+        if (period() === "all") return rows;
+        let start, end;
+        if (period() === "monthly") {
+          start = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+          end = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0, 23, 59, 59);
+        } else {
+          const from = $("dFrom").value, to = $("dTo").value;
+          start = from ? new Date(from + "T00:00:00") : new Date("2000-01-01T00:00:00");
+          end = to ? new Date(to + "T23:59:59") : new Date("2099-12-31T23:59:59");
+        }
+        return rows.filter(d => { const t = toDate(d.date); return t >= start && t <= end; });
+      }
+
+      function render() {
+        if (!rows) return;
+        $("dashLoading").style.display = "none";
+        $("dashApp").hidden = false;
+        $("dCustom").hidden = period() !== "custom";
+        $("dCalSection").style.display = period() === "monthly" ? "" : "none";
+
+        const base = baseRows();
+        if (period() === "monthly") renderCalendar(catFilter ? base.filter(d => d.category === catFilter) : base);
+
+        const sumRows = dateFilter ? base.filter(d => d.date === dateFilter) : base;
+        renderSummary(sumRows);
+        renderPie(sumRows);
+
+        let tableRows = base;
+        if (catFilter) tableRows = tableRows.filter(d => d.category === catFilter);
+        if (dateFilter) tableRows = tableRows.filter(d => d.date === dateFilter);
+        renderTable(tableRows);
+      }
+
+      function renderCalendar(data) {
+        const year = viewMonth.getFullYear(), month = viewMonth.getMonth();
+        $("dMonth").textContent = `${year}年${month + 1}月`;
+        const todayStr = dateKey(new Date());
+        const agg = {};
+        data.forEach(d => { agg[d.date] = (agg[d.date] || 0) + d.amount; });
+
+        let html = ["日", "月", "火", "水", "木", "金", "土"].map(w => `<div class="d-cal-head">${w}</div>`).join("");
+        const firstDay = new Date(year, month, 1).getDay();
+        const days = new Date(year, month + 1, 0).getDate();
+        for (let i = 0; i < firstDay; i++) html += `<div class="d-cal-cell empty"></div>`;
+        for (let d = 1; d <= days; d++) {
+          const key = `${year}/${pad(month + 1)}/${pad(d)}`;
+          const amount = agg[key] || 0;
+          const cls = ["d-cal-cell", amount > 0 ? "has-data" : "", dateFilter === key ? "selected" : ""].join(" ");
+          const body = amount > 0 ? `<div class="d-cal-amount">¥${yen(amount)}</div>`
+            : key <= todayStr ? `<div class="d-cal-zero">✨¥0</div>` : "";
+          html += `<div class="${cls}" data-date="${key}"><div class="d-cal-day">${d}</div>${body}</div>`;
+        }
+        $("dCal").innerHTML = html;
+      }
+
+      function renderSummary(data) {
+        const sec = $("dSummary");
+        if (!data.length) { sec.innerHTML = '<div class="d-empty">データがありません</div>'; summary = []; return; }
+        let total = 0;
+        const agg = {};
+        data.forEach(d => {
+          total += d.amount;
+          (agg[d.category] || (agg[d.category] = { total: 0, items: [] })).total += d.amount;
+          agg[d.category].items.push(d);
+        });
+        summary = Object.keys(agg).map(cat => ({ cat, total: agg[cat].total, items: agg[cat].items }))
+          .sort((a, b) => b.total - a.total);
+        sec.innerHTML = `<div class="d-sum-total"><span>合計</span><span class="d-sum-amount">¥${yen(total)}</span></div>`
+          + `<ul class="d-sum-list">` + summary.map((g, i) => `
+            <li class="d-sum-wrap" data-index="${i}">
+              <div class="d-sum-item" data-toggle="${i}"><span>${esc(g.cat)} <span class="d-toggle">▼</span></span><span class="d-sum-amount">¥${yen(g.total)}</span></div>
+              <div class="d-sum-detail"><div id="dItems${i}"></div></div>
+            </li>`).join("") + `</ul>`;
+        summary.forEach((g, i) => renderDetail(i));
+      }
+
+      function renderDetail(i) {
+        const st = sortState[i] || { key: "date", dir: "desc" };
+        const items = [...summary[i].items].sort((a, b) => {
+          let r;
+          if (st.key === "amount") r = a.amount - b.amount;
+          else if (st.key === "memo") r = String(a.memo || "").localeCompare(String(b.memo || ""));
+          else r = toDate(a.date) - toDate(b.date);
+          return st.dir === "asc" ? r : -r;
+        });
+        const btn = (key, label) => {
+          const arrow = st.key === key ? (st.dir === "desc" ? "↓" : "↑") : "";
+          return `<div class="d-sort${st.key === key ? " active" : ""}" data-sort="${i}" data-key="${key}">${label} ${arrow}</div>`;
+        };
+        $("dItems" + i).innerHTML = `<div class="d-controls">${btn("date", "📅 日付")}${btn("memo", "📝 使途")}${btn("amount", "💰 金額")}</div>`
+          + items.map(it => `<div class="d-detail-item"><span class="d-detail-name">${esc(String(it.date).slice(5))} ${esc(it.memo || "(未記入)")}</span><span class="d-detail-amount">¥${yen(it.amount)}</span></div>`).join("");
+      }
+
+      function sortDetail(i, key) {
+        const st = sortState[i] || (sortState[i] = { key: "date", dir: "desc" });
+        if (st.key === key) st.dir = st.dir === "desc" ? "asc" : "desc";
+        else { st.key = key; st.dir = (key === "amount" || key === "date") ? "desc" : "asc"; }
+        renderDetail(i);
+      }
+
+      function renderTable(data) {
+        $("dTable").innerHTML = [...data].sort((a, b) => toDate(b.date) - toDate(a.date)).map(r =>
+          `<tr><td>${esc(String(r.date).slice(5))}</td><td>${esc(r.category)}</td><td>${esc(r.memo)}</td><td class="d-amount">¥${yen(r.amount)}</td></tr>`).join("");
+      }
+
+      function renderPie(data) {
+        if (!window.Chart || !window.ChartDataLabels) {
+          loadChart().then(() => { if (rows) render(); }).catch(() => {});
+          return;
+        }
+        const agg = {};
+        data.forEach(d => { agg[d.category] = (agg[d.category] || 0) + d.amount; });
+        const labels = Object.keys(agg);
+        if (pie) pie.destroy();
+        pie = new Chart($("dPie").getContext("2d"), {
+          type: "doughnut",
+          plugins: [ChartDataLabels],
+          data: { labels, datasets: [{ data: Object.values(agg), backgroundColor: COLORS }] },
+          options: {
+            plugins: {
+              datalabels: {
+                color: "#ffffff", font: { weight: "bold", size: 11 },
+                textStrokeColor: "rgba(0,0,0,0.4)", textStrokeWidth: 3, textAlign: "center",
+                formatter: (value, ctx) => {
+                  const total = ctx.dataset.data.reduce((a, c) => a + c, 0);
+                  if (!total) return null;
+                  const pct = value / total * 100;
+                  return pct >= 5 ? ctx.chart.data.labels[ctx.dataIndex] + "\n" + Math.round(pct) + "%" : null;
+                }
+              }
+            },
+            onClick: (e, active) => { if (active.length) { catFilter = labels[active[0].index]; render(); } }
+          }
+        });
+      }
+
+      // 操作
+      $("dPeriod").addEventListener("change", () => { dateFilter = null; render(); });
+      $("dFrom").addEventListener("change", render);
+      $("dTo").addEventListener("change", render);
+      $("dReset").addEventListener("click", () => { catFilter = null; dateFilter = null; render(); });
+      $("dPrev").addEventListener("click", () => { viewMonth.setMonth(viewMonth.getMonth() - 1); dateFilter = null; render(); });
+      $("dNext").addEventListener("click", () => { viewMonth.setMonth(viewMonth.getMonth() + 1); dateFilter = null; render(); });
+      $("dCal").addEventListener("click", e => {
+        const cell = e.target.closest(".d-cal-cell[data-date]");
+        if (!cell) return;
+        dateFilter = dateFilter === cell.dataset.date ? null : cell.dataset.date;
+        render();
+      });
+      $("dSummary").addEventListener("click", e => {
+        const s = e.target.closest("[data-sort]");
+        if (s) { sortDetail(Number(s.dataset.sort), s.dataset.key); return; }
+        const t = e.target.closest("[data-toggle]");
+        if (t) t.closest(".d-sum-wrap").classList.toggle("open");
+      });
+
+      return {
+        hasData: () => !!rows,
+        setRows(r) {
+          rows = (r || []).map(x => ({ date: String(x.date), category: String(x.category), amount: Number(x.amount) || 0, memo: x.memo == null ? "" : String(x.memo) }));
+          sortState = {};
+          if ($("view-dashboard").classList.contains("show")) render();
+        },
+        render,
+        loadChart
+      };
+    })();
 
     function updateDashBadge() {
-      // 表示中の分析があり、それが古くなる（または入れ替え待ち）ときだけ知らせる
-      $("dashUpdating").style.display = (dashLive && (dashStale || dashPending)) ? "block" : "none";
+      // 表示中の分析があり、それが古くなる（または読み直し中）ときだけ知らせる
+      $("dashUpdating").style.display = (Dash.hasData() && (dashStale || dashLoading)) ? "block" : "none";
     }
 
-    // 新しい分析を見えない状態で読み込み、表示できる合図が来たら入れ替える（空白を見せない）
-    function refreshDash() {
+    // 分析のデータを読み直す。読み終わるまでは前のデータを表示したままにする（空白を見せない）
+    async function refreshDash() {
       clearTimeout(dashTimer);
-      if (dashPending) { clearTimeout(dashPending._fallback); dashPending.remove(); }
-      const f = document.createElement("iframe");
-      f.title = "分析";
-      f.style.cssText = "position:absolute; inset:0; visibility:hidden;";
-      f.src = GAS_URL + "?v=" + Date.now();
-      $("dashHost").appendChild(f);
-      dashPending = f;
+      if (dashLoading || authLost) return;
+      dashLoading = true;
       dashStale = false;
-      // 合図が届かなくても（古い版など）60秒後には切り替える
-      f._fallback = setTimeout(() => { if (dashPending === f) swapDash(); }, 60000);
       updateDashBadge();
-    }
-
-    function swapDash() {
-      const f = dashPending;
-      if (!f) return;
-      clearTimeout(f._fallback);
-      if (dashLive) dashLive.remove();
-      f.style.cssText = "";
-      dashLive = f;
-      dashPending = null;
-      dashLoadedAt = Date.now();
-      $("dashLoading").style.display = "none";
-      updateDashBadge();
+      try {
+        const d = await api("dashboard", {}, { timeout: 30000, retries: 1 });
+        Dash.setRows(d.rows);
+        dashLoadedAt = Date.now();
+      } catch (e) {
+        if (!Dash.hasData() && !(e instanceof AuthError)) $("dashLoading").textContent = "📶 分析を読み込めませんでした。タブを開き直すと、もう一度読み込むよ";
+      } finally {
+        dashLoading = false;
+        updateDashBadge();
+      }
     }
 
     // 記録が変わったら、少し待ってまとめて読み直す
@@ -845,15 +1224,6 @@
       updateDashBadge();
     }
 
-    window.addEventListener("message", e => {
-      if (!e.data || e.data.type !== "kakeibo-dash-ready" || !dashPending) return;
-      try {
-        const h = new URL(e.origin).hostname;
-        if (!(h === "script.google.com" || h.endsWith(".googleusercontent.com"))) return;
-      } catch (err) { return; }
-      swapDash();
-    });
-
     window.switchTab = function(target) {
       if(target === 'input') {
         $('view-input').style.display = 'block';
@@ -861,35 +1231,66 @@
         $('tab-input').classList.add('active');
         $('tab-dashboard').classList.remove('active');
       } else {
-        if (!dashLive && !dashPending) refreshDash();
+        if (!Dash.hasData() && !dashLoading) { $("dashLoading").textContent = "📊 分析を準備中…"; refreshDash(); }
+        Dash.loadChart().catch(() => {});
         updateDashBadge();
         $('view-input').style.display = 'none';
         $('view-dashboard').classList.add('show');
         $('tab-input').classList.remove('active');
         $('tab-dashboard').classList.add('active');
+        if (Dash.hasData()) Dash.render();
       }
     };
 
     // ---------- 起動 ----------
 
-    $("randomMsg").textContent = messages[Math.floor(Math.random() * messages.length)];
-    outbox.forEach(r => { r.failed = true; });  // 前回送れなかった分
-    renderAll();
-    renderSync(false);
-    load();
-    flush();
-
-    window.addEventListener("online", () => { flush(); load(); });
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState !== "visible") return;
+    // ログインを確かめてから入力画面を動かす。ログイン前は GAS を一切呼ばない
+    function startApp(session) {
+      if (session && session.user) $("accountEmail").textContent = session.user.email || "";
+      if (appStarted) return;
+      appStarted = true;
+      document.body.classList.remove("booting", "signed-out");
+      $("randomMsg").textContent = messages[Math.floor(Math.random() * messages.length)];
+      outbox.forEach(r => { r.failed = true; });  // 前回送れなかった分
+      renderAll();
+      renderSync(false);
+      load();
       flush();
-      if (Date.now() - lastLoadAt > 60 * 1000) load();
-      // 開きっぱなしで古くなった分析（他の端末での登録など）を裏で読み直す
-      if (dashLive && !dashPending && Date.now() - dashLoadedAt > 5 * 60 * 1000) scheduleDashRefresh(1000);
-      renderBudget();
-      renderDateButtons();
-    });
-    setInterval(() => { if (outbox.some(r => r.failed)) flush(); }, 30 * 1000);
+
+      window.addEventListener("online", () => { flush(); load(); });
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "visible" || authLost) return;
+        flush();
+        if (Date.now() - lastLoadAt > 60 * 1000) load();
+        // 開きっぱなしで古くなった分析（他の端末での登録など）を裏で読み直す
+        if (Dash.hasData() && !dashLoading && Date.now() - dashLoadedAt > 5 * 60 * 1000) scheduleDashRefresh(1000);
+        renderBudget();
+        renderDateButtons();
+      });
+      setInterval(() => { if (!authLost && outbox.some(r => r.failed)) flush(); }, 30 * 1000);
+    }
+
+    async function boot() {
+      // 端末にログイン情報があれば、通信を待たずに入力画面を出す（電波がなくても記録できるように）
+      if (hasStoredSession()) startApp(null);
+      if (!sb) { if (!appStarted) showLogin("読み込みに失敗しました。通信を確認して、ページを開き直してね"); return; }
+
+      // Google から戻ってきたとき（URL にログイン結果が付いている）は、ここで読み取られる
+      let session = null;
+      try { session = (await sb.auth.getSession()).data.session; } catch (e) {}
+      if (session) {
+        startApp(session);
+        // ログイン結果が付いた URL を、履歴に残らない形で消す
+        if (location.hash.includes("access_token") || location.search.includes("code=")) history.replaceState(null, "", location.pathname);
+      } else if (!appStarted) {
+        showLogin(/error_description=/.test(location.hash + location.search) ? "ログインできませんでした。もう一度試してね" : "");
+      }
+
+      sb.auth.onAuthStateChange((event, s) => {
+        if (event === "SIGNED_IN" && s && !authLost) startApp(s);
+      });
+    }
+    boot();
   </script>
 </body>
 </html>
