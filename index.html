@@ -229,6 +229,10 @@
     .rc-add { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0 6px; margin: 12px 0 0; padding: 10px 12px; border-radius: 14px; border: 1.5px dashed #ffc6dc; background: #fff; color: var(--accent-pink); font-size: 13px; font-weight: 900; white-space: normal; cursor: pointer; }
     .rc-add[hidden] { display: none; }
     .rc-add small { font-size: 10.5px; color: var(--muted); font-weight: bold; }
+    .rc-thumbs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 4px 0 10px; }
+    .rc-thumbs img { width: 64px; height: 86px; object-fit: cover; border-radius: 10px; border: 1.5px solid #ffe0ec; }
+    .rc-prep-msg { text-align: center; font-size: 13px; font-weight: bold; color: var(--muted); line-height: 1.6; margin-bottom: 4px; }
+    .rc-prep-msg b { display: block; font-size: 15px; color: var(--text, #4a4a5a); }
 
     /* ▼ 追加：タブ切り替えとダッシュボード用のCSS ▼ */
     .bottom-tab-bar {
@@ -491,6 +495,18 @@
   <div class="sheet" id="rcSheet" role="dialog" aria-modal="true" aria-labelledby="rcTitle">
     <div class="sheet-grip"></div>
     <div class="sheet-head"><span class="sheet-title" id="rcTitle">レシートを確認</span><button type="button" class="sheet-close" id="rcClose" aria-label="閉じる">✕</button></div>
+    <div class="card" id="rcPrep" hidden>
+      <div class="rc-thumbs" id="rcThumbs"></div>
+      <div class="rc-prep-msg" id="rcPrepMsg"></div>
+      <div class="rc-btns" id="rcPrepAdd" style="margin:8px 0 0;">
+        <label class="rc-add" for="rcAddInput" style="flex:1;margin:0;">📷 続きを撮り足す</label>
+        <label class="rc-add" for="rcAddPick" style="flex:1;margin:0;">🖼 写真から足す</label>
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="sheet-del" id="rcPrepCancel">やめる</button>
+        <button type="button" class="sheet-save" id="rcGo">🔍 読み取る</button>
+      </div>
+    </div>
     <div class="card" id="rcWait"><div class="rc-status" id="rcStatus"></div></div>
     <div class="card" id="rcBody" hidden>
       <label>お店・メモ</label>
@@ -1296,11 +1312,28 @@
     function rcOpen() { $("rcBackdrop").classList.add("show"); $("rcSheet").classList.add("show"); }
     function rcClose() { rcSeq++; rc = null; rcImages = []; $("rcBackdrop").classList.remove("show"); $("rcSheet").classList.remove("show"); }
     function rcShowStatus(icon, html) {
-      $("rcWait").hidden = false; $("rcBody").hidden = true;
+      $("rcPrep").hidden = true; $("rcWait").hidden = false; $("rcBody").hidden = true;
       $("rcStatus").innerHTML = `<b>${icon}</b>${html}`;
     }
     $("rcClose").addEventListener("click", rcClose);
     $("rcCancel").addEventListener("click", rcClose);
+    $("rcPrepCancel").addEventListener("click", rcClose);
+    $("rcGo").addEventListener("click", () => { if (rcImages.length) rcRead(rcImages); });
+
+    // 読み取る前に、撮った写真を見せて「撮り足す？」を聞く（長いレシートは全部そろってから読む）
+    function rcPrep(images) {
+      rcSeq++;  // 読み取り中の結果が遅れて届いても捨てる
+      rcImages = [].concat(images);
+      rc = null;
+      rcOpen();
+      $("rcThumbs").innerHTML = rcImages.map(b => `<img alt="" src="data:image/jpeg;base64,${b}">`).join("");
+      const n = rcImages.length;
+      $("rcPrepMsg").innerHTML = n > 1
+        ? `<b>写真 ${n}枚</b>これで全部なら「読み取る」を押してね。重なった行は1回だけ数えるよ`
+        : "<b>写真 1枚</b>長いレシートで続きがあるなら、先に撮り足してね";
+      $("rcPrepAdd").hidden = n >= RC_MAX_PHOTOS;
+      $("rcPrep").hidden = false; $("rcWait").hidden = true; $("rcBody").hidden = true;
+    }
     $("rcBackdrop").addEventListener("click", rcClose);
 
     // 写真（base64。撮り足したときは数枚）を送って、結果が届くまで待つ
@@ -1312,10 +1345,10 @@
       try {
         const sub = await api("receipt_submit", { image: rcImages.join(",") }, { timeout: 60000 });
         if (seq !== rcSeq) return;
-        rcShowStatus("🔍", sub.workerOnline ? "レシートを読んでいるよ…<br>30秒くらいかかるよ" : "レシートを読んでいるよ…<br>（おうちのパソコンが起きていないと読めないよ）");
+        rcShowStatus("🔍", sub.workerOnline ? "レシートを読んでいるよ…<br>15秒くらいかかるよ" : "レシートを読んでいるよ…<br>（おうちのパソコンが起きていないと読めないよ）");
         const started = Date.now();
         for (;;) {
-          await sleep(3000);
+          await sleep(1500);
           if (seq !== rcSeq) return;
           const r = await api("receipt_poll", { id: sub.id }, { timeout: 12000, retries: 1 });
           if (seq !== rcSeq) return;
@@ -1344,11 +1377,11 @@
       const images = [];
       try { for (const file of files.slice(0, room)) images.push(await shrinkImage(file)); }
       catch (err) { alert("写真を読み込めませんでした。もう一度選んでね。"); return; }
-      rcRead([...base, ...images]);
+      rcPrep([...base, ...images]);
     }
     $("rcInput").addEventListener("change", e => rcTake(e, []));
     $("rcPick").addEventListener("change", e => rcTake(e, []));
-    // 撮り足し：今までの写真と合わせて、もう一度まとめて読み直す
+    // 撮り足し：今までの写真に足して、読み取る前の確認に戻る（読み取り後に足した場合は、まとめて読み直す）
     $("rcAddInput").addEventListener("change", e => { if (rcImages.length) rcTake(e, rcImages); });
     $("rcAddPick").addEventListener("change", e => { if (rcImages.length) rcTake(e, rcImages); });
 
